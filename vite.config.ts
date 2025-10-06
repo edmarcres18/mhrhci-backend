@@ -13,9 +13,12 @@ export default defineConfig({
             refresh: true,
         }),
         tailwindcss(),
-        wayfinder({
-            formVariants: true,
-        }),
+        // Conditionally skip wayfinder in Docker build
+        ...(process.env.DOCKER_BUILD ? [] : [
+            wayfinder({
+                formVariants: true,
+            }),
+        ]),
         vue({
             template: {
                 transformAssetUrls: {

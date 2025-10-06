@@ -30,4 +30,4 @@ tests
 .DS_Store
 auth.json
 public/storage
-
+public/build

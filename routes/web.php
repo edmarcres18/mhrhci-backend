@@ -2,6 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\BlogController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\SiteInformationController;
+use App\Http\Controllers\SiteSettingsController;
+use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Middleware\EnsureUserHasAdminPrivileges;
+use App\Http\Middleware\EnsureUserIsSystemAdmin;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -10,6 +18,35 @@ Route::get('/', function () {
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('products', ProductController::class);
+    Route::resource('blogs', BlogController::class);
+    Route::resource('users', UserController::class);
+    
+    // Site Information - Single record management (Admin only)
+    Route::middleware([EnsureUserHasAdminPrivileges::class])->group(function () {
+        Route::get('site-information', [SiteInformationController::class, 'index'])->name('site-information.index');
+        Route::post('site-information', [SiteInformationController::class, 'store'])->name('site-information.store');
+        Route::delete('site-information', [SiteInformationController::class, 'destroy'])->name('site-information.destroy');
+        
+        // Database Backup Management (Admin only)
+        Route::get('database-backup', [DatabaseBackupController::class, 'index'])->name('database-backup.index');
+        Route::post('database-backup/create', [DatabaseBackupController::class, 'backup'])->name('database-backup.create');
+        Route::get('database-backup/download/{filename}', [DatabaseBackupController::class, 'download'])->name('database-backup.download');
+        Route::delete('database-backup/{filename}', [DatabaseBackupController::class, 'destroy'])->name('database-backup.delete');
+        Route::post('database-backup/restore', [DatabaseBackupController::class, 'restore'])->name('database-backup.restore');
+        Route::post('database-backup/upload-restore', [DatabaseBackupController::class, 'uploadAndRestore'])->name('database-backup.upload-restore');
+    });
+
+    // Site Settings - System Admin only
+    Route::middleware([EnsureUserIsSystemAdmin::class])->group(function () {
+        Route::get('site-settings', [SiteSettingsController::class, 'index'])->name('site-settings.index');
+        Route::post('site-settings', [SiteSettingsController::class, 'update'])->name('site-settings.update');
+        Route::post('site-settings/remove-logo', [SiteSettingsController::class, 'removeLogo'])->name('site-settings.remove-logo');
+        Route::post('site-settings/reset', [SiteSettingsController::class, 'reset'])->name('site-settings.reset');
+    });
+});
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

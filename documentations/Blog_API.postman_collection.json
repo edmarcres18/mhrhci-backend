@@ -1,0 +1,439 @@
+{
+	"info": {
+		"_postman_id": "blog-api-collection-2025",
+		"name": "Blog API",
+		"description": "Production-ready Blog API with pagination, search, caching, and rate limiting",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get All Blogs",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has success field\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});",
+							"",
+							"pm.test(\"Response has data array\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"});",
+							"",
+							"pm.test(\"Response has meta object\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('meta');",
+							"    pm.expect(jsonData.meta).to.have.property('current_page');",
+							"    pm.expect(jsonData.meta).to.have.property('total');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/blogs?perPage=10&page=1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"blogs"
+					],
+					"query": [
+						{
+							"key": "perPage",
+							"value": "10",
+							"description": "Items per page (1-100)"
+						},
+						{
+							"key": "page",
+							"value": "1",
+							"description": "Page number"
+						},
+						{
+							"key": "search",
+							"value": "",
+							"description": "Search in title and content",
+							"disabled": true
+						},
+						{
+							"key": "sortBy",
+							"value": "created_at",
+							"description": "Sort field: created_at, updated_at, title",
+							"disabled": true
+						},
+						{
+							"key": "sortOrder",
+							"value": "desc",
+							"description": "Sort order: asc, desc",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Fetch all blogs with pagination, search, and sorting options.\n\n**Parameters:**\n- `perPage` (optional): Items per page (1-100, default: 10)\n- `page` (optional): Page number (default: 1)\n- `search` (optional): Search term for title and content\n- `sortBy` (optional): Sort field (created_at, updated_at, title)\n- `sortOrder` (optional): Sort order (asc, desc)\n\n**Rate Limit:** 60 requests per minute"
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Blogs with Search",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Search results contain search term\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.data.length > 0) {",
+							"        var searchTerm = pm.request.url.query.get('search');",
+							"        var firstItem = jsonData.data[0];",
+							"        var containsSearch = firstItem.title.toLowerCase().includes(searchTerm.toLowerCase()) || ",
+							"                            firstItem.content.toLowerCase().includes(searchTerm.toLowerCase());",
+							"        pm.expect(containsSearch).to.be.true;",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/blogs?search=technology&perPage=25",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"blogs"
+					],
+					"query": [
+						{
+							"key": "search",
+							"value": "technology"
+						},
+						{
+							"key": "perPage",
+							"value": "25"
+						}
+					]
+				},
+				"description": "Search blogs by keyword in title or content."
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Blogs with Custom Sort",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/blogs?sortBy=title&sortOrder=asc&perPage=20",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"blogs"
+					],
+					"query": [
+						{
+							"key": "sortBy",
+							"value": "title"
+						},
+						{
+							"key": "sortOrder",
+							"value": "asc"
+						},
+						{
+							"key": "perPage",
+							"value": "20"
+						}
+					]
+				},
+				"description": "Fetch blogs sorted by title in ascending order."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Latest Blogs (Default 3)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Returns correct number of blogs\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.length).to.be.at.most(3);",
+							"});",
+							"",
+							"pm.test(\"Blogs are ordered by newest first\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.data.length > 1) {",
+							"        var firstDate = new Date(jsonData.data[0].created_at);",
+							"        var secondDate = new Date(jsonData.data[1].created_at);",
+							"        pm.expect(firstDate.getTime()).to.be.at.least(secondDate.getTime());",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/blogs/latest",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"blogs",
+						"latest"
+					]
+				},
+				"description": "Fetch the 3 most recent blog posts.\n\n**Rate Limit:** 100 requests per minute"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Latest Blogs (Custom Limit)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Returns requested number of blogs\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    var limit = parseInt(pm.request.url.query.get('limit'));",
+							"    pm.expect(jsonData.data.length).to.be.at.most(limit);",
+							"    pm.expect(jsonData.meta.limit).to.equal(limit);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/blogs/latest?limit=10",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"blogs",
+						"latest"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10",
+							"description": "Number of blogs to fetch (1-50)"
+						}
+					]
+				},
+				"description": "Fetch a custom number of latest blog posts (max 50)."
+			},
+			"response": []
+		},
+		{
+			"name": "Test Validation - Invalid PerPage",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 422\", function () {",
+							"    pm.response.to.have.status(422);",
+							"});",
+							"",
+							"pm.test(\"Response indicates validation error\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.be.false;",
+							"    pm.expect(jsonData.message).to.equal('Validation failed');",
+							"    pm.expect(jsonData.errors).to.have.property('perPage');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/blogs?perPage=200",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"blogs"
+					],
+					"query": [
+						{
+							"key": "perPage",
+							"value": "200",
+							"description": "Invalid - exceeds max of 100"
+						}
+					]
+				},
+				"description": "Test validation by requesting more than the maximum allowed items per page (100)."
+			},
+			"response": []
+		},
+		{
+			"name": "Test Validation - Invalid Limit",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 422\", function () {",
+							"    pm.response.to.have.status(422);",
+							"});",
+							"",
+							"pm.test(\"Response indicates validation error\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.be.false;",
+							"    pm.expect(jsonData.errors).to.have.property('limit');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/blogs/latest?limit=100",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"blogs",
+						"latest"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "100",
+							"description": "Invalid - exceeds max of 50"
+						}
+					]
+				},
+				"description": "Test validation by requesting more than the maximum allowed limit (50)."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost",
+			"type": "string"
+		}
+	]
+}

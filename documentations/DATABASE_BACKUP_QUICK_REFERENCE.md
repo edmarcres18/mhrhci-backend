@@ -36,7 +36,7 @@ crontab -e
 
 **Add this line:**
 ```
-* * * * * cd /var/www/mhrhci-backend && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /var/www/mhrhci-backend && sudo docker compose exec app php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ## Setup Task Scheduler (Windows)

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Product;
 use App\ProductType;
+use Faker\Generator as Faker;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -15,16 +16,14 @@ class ProductFactory extends Factory
 
     public function definition(): array
     {
-        $faker = \Faker\Factory::create();
-        
         return [
-            'name' => $faker->words(3, true),
-            'product_type' => $faker->randomElement(ProductType::cases()),
-            'description' => $faker->paragraph(),
+            'name' => fake()->words(3, true),
+            'product_type' => fake()->randomElement(ProductType::cases()),
+            'description' => fake()->paragraph(),
             // Keep images empty by default to avoid broken /storage paths in dev
             'images' => [],
             // Random list of features
-            'features' => $faker->boolean(70) ? $faker->sentences($faker->numberBetween(2, 5)) : [],
+            'features' => fake()->boolean(70) ? fake()->sentences(fake()->numberBetween(2, 5)) : [],
         ];
     }
 }

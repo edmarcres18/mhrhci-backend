@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Blog;
+use Faker\Generator as Faker;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,11 +15,9 @@ class BlogFactory extends Factory
 
     public function definition(): array
     {
-        $faker = \Faker\Factory::create();
-        
         return [
-            'title' => $faker->sentence(6),
-            'content' => $faker->paragraphs(5, true),
+            'title' => fake()->sentence(6),
+            'content' => fake()->paragraphs(5, true),
             // Keep images empty by default to avoid broken /storage paths in dev
             'images' => [],
         ];

@@ -24,9 +24,12 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        // Use faker if available (dev), otherwise provide safe defaults (production)
+        $faker = $this->faker ?? null;
+        
         return [
-            'name' => $this->faker->name(),
-            'email' => $this->faker->unique()->safeEmail(),
+            'name' => $faker ? $faker->name() : 'User ' . Str::random(6),
+            'email' => $faker ? $faker->unique()->safeEmail() : 'user' . Str::random(10) . '@example.com',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

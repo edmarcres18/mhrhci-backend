@@ -15,14 +15,16 @@ class ProductFactory extends Factory
 
     public function definition(): array
     {
+        $faker = \Faker\Factory::create();
+        
         return [
-            'name' => $this->faker->words(3, true),
-            'product_type' => $this->faker->randomElement(ProductType::cases()),
-            'description' => $this->faker->paragraph(),
+            'name' => $faker->words(3, true),
+            'product_type' => $faker->randomElement(ProductType::cases()),
+            'description' => $faker->paragraph(),
             // Keep images empty by default to avoid broken /storage paths in dev
             'images' => [],
             // Random list of features
-            'features' => $this->faker->boolean(70) ? $this->faker->sentences($this->faker->numberBetween(2, 5)) : [],
+            'features' => $faker->boolean(70) ? $faker->sentences($faker->numberBetween(2, 5)) : [],
         ];
     }
 }

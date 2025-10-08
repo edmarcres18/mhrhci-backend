@@ -14,9 +14,11 @@ class BlogFactory extends Factory
 
     public function definition(): array
     {
+        $faker = \Faker\Factory::create();
+        
         return [
-            'title' => $this->faker->sentence(6),
-            'content' => $this->faker->paragraphs(5, true),
+            'title' => $faker->sentence(6),
+            'content' => $faker->paragraphs(5, true),
             // Keep images empty by default to avoid broken /storage paths in dev
             'images' => [],
         ];

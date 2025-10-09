@@ -50,8 +50,6 @@ return [
     | the Artisan command line tool. You should set this to the root of
     | the application so that it's available within Artisan commands.
     |
-    */
-
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
@@ -65,13 +63,12 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Asia/Manila'),
 
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
-    |
     | The application locale determines the default locale that will be used
     | by Laravel's translation / localization methods. This option can be
     | set to any locale for which you plan to have translation strings.

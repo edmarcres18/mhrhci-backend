@@ -26,6 +26,22 @@ The Docker setup includes the following services:
 - **redis**: Redis 7 for caching, sessions, and queues
 - **phpmyadmin**: Database management interface
 
+### Scheduler (Supervisor)
+
+The `scheduler` service runs Laravel's scheduler in daemon mode using Supervisor.
+
+- Command: `php artisan schedule:work`
+- Process manager: `supervisord`
+- Healthcheck: verifies `laravel-scheduler` is RUNNING via `supervisorctl`
+
+Verify scheduler status:
+
+```bash
+docker-compose ps scheduler
+docker-compose logs -f scheduler
+docker-compose exec scheduler supervisorctl -c /etc/supervisor/supervisord.conf status
+```
+
 ## Environment Configuration
 
 All services are configured via the `.env` file. Key variables:
@@ -83,6 +99,12 @@ docker-compose exec app bash
 ```bash
 docker-compose down
 docker-compose up -d --build
+```
+
+If only the scheduler changed, you can rebuild it specifically:
+
+```bash
+docker-compose build scheduler && docker-compose up -d scheduler
 ```
 
 ### Remove all data (including volumes)

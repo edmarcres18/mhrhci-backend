@@ -24,7 +24,7 @@ const { siteSettings } = useSiteSettings();
                         class="flex flex-col items-center gap-3 font-medium"
                     >
                         <div
-                            class="mb-2 flex h-24 w-24 items-center justify-center rounded-lg bg-white dark:bg-neutral-900 shadow-sm border border-neutral-200 dark:border-neutral-800"
+                            class="mb-2 flex h-24 w-24 items-center justify-center rounded-lg dark:bg-neutral-900 shadow-sm border border-neutral-200 dark:border-neutral-800"
                         >
                             <img 
                                 v-if="siteSettings.site_logo" 

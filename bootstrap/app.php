@@ -24,6 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        // Register middleware aliases
+        $middleware->alias([
+            'validate.invitation' => \App\Http\Middleware\ValidateInvitation::class,
+        ]);
+
         // Trust proxy headers so Laravel correctly detects HTTPS when behind Nginx/Cloudflare
         // This prevents mixed-content by ensuring generated URLs use the https scheme.
         $middleware->trustProxies(at: '*', headers:

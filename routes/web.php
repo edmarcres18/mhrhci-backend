@@ -24,6 +24,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('blogs', BlogController::class);
     Route::resource('users', UserController::class);
     
+    // User invitation routes
+    Route::get('users-invite', [UserController::class, 'inviteForm'])->name('users.invite.form');
+    Route::post('users-invite', [UserController::class, 'sendInvitation'])->name('users.invite.send');
+    Route::get('invitations', [UserController::class, 'invitations'])->name('invitations.index');
+    Route::post('invitations/{invitation}/resend', [UserController::class, 'resendInvitation'])->name('invitations.resend');
+    Route::delete('invitations/{invitation}', [UserController::class, 'cancelInvitation'])->name('invitations.cancel');
+    
     // Site Information - Single record management (Admin only)
     Route::middleware([EnsureUserHasAdminPrivileges::class])->group(function () {
         Route::get('site-information', [SiteInformationController::class, 'index'])->name('site-information.index');

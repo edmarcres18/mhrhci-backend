@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Invitation;
 use App\UserRole;
+use App\Notifications\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -295,5 +299,185 @@ class UserController extends Controller
         return redirect()
             ->route('users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    /**
+     * Show the invitation form.
+     */
+    public function inviteForm(): Response
+    {
+        // Only Admin and System Admin can send invitations
+        $currentUser = auth()->user();
+        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+            abort(403, 'You do not have permission to send invitations.');
+        }
+
+        $roles = collect(UserRole::all())
+            ->filter(function ($role) use ($currentUser) {
+                // Admin users cannot invite System Admin accounts
+                if ($currentUser->isAdmin() && $role === UserRole::SYSTEM_ADMIN) {
+                    return false;
+                }
+                return true;
+            })
+            ->map(function ($role) {
+                return [
+                    'value' => $role->value,
+                    'label' => $role->displayName(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        return Inertia::render('Users/Invite', [
+            'roles' => $roles,
+        ]);
+    }
+
+    /**
+     * Send an invitation email to a user.
+     */
+    public function sendInvitation(Request $request)
+    {
+        // Only Admin and System Admin can send invitations
+        $currentUser = auth()->user();
+        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+            abort(403, 'You do not have permission to send invitations.');
+        }
+
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', 'string', 'in:' . implode(',', UserRole::values())],
+        ]);
+
+        // Admin users cannot invite System Admin accounts
+        if ($currentUser->isAdmin() && $validated['role'] === UserRole::SYSTEM_ADMIN->value) {
+            return back()->withErrors(['role' => 'You do not have permission to invite System Admin users.']);
+        }
+
+        // Check if there's already a pending invitation for this email
+        $existingInvitation = Invitation::where('email', $validated['email'])
+            ->where('used', false)
+            ->where('expires_at', '>', Carbon::now())
+            ->first();
+
+        if ($existingInvitation) {
+            return back()->withErrors(['email' => 'An invitation has already been sent to this email address.']);
+        }
+
+        // Create the invitation
+        $invitation = Invitation::create([
+            'email' => $validated['email'],
+            'token' => Invitation::generateToken(),
+            'role' => $validated['role'],
+            'invited_by' => $currentUser->id,
+            'expires_at' => Carbon::now()->addDays(7),
+        ]);
+
+        // Send the invitation email
+        Notification::route('mail', $validated['email'])
+            ->notify(new UserInvitation($invitation));
+
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'Invitation sent successfully to ' . $validated['email']);
+    }
+
+    /**
+     * Display a listing of pending invitations.
+     */
+    public function invitations(Request $request): Response
+    {
+        // Only Admin and System Admin can view invitations
+        $currentUser = auth()->user();
+        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+            abort(403, 'You do not have permission to view invitations.');
+        }
+
+        $search = (string) $request->query('search', '');
+        $perPage = (int) $request->query('perPage', 10);
+        $allowed = [10, 25, 50, 100];
+        if (!in_array($perPage, $allowed, true)) {
+            $perPage = 10;
+        }
+
+        $query = Invitation::with('invitedBy');
+
+        if ($search !== '') {
+            $query->where('email', 'like', "%{$search}%");
+        }
+
+        $invitations = $query
+            ->latest('created_at')
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(function ($invitation) {
+                $role = UserRole::tryFrom($invitation->role);
+                return [
+                    'id' => $invitation->id,
+                    'email' => $invitation->email,
+                    'role' => $invitation->role,
+                    'role_display' => $role ? $role->displayName() : 'Staff',
+                    'used' => $invitation->used,
+                    'expires_at' => optional($invitation->expires_at)->toDateTimeString(),
+                    'invited_by' => $invitation->invitedBy->name,
+                    'is_expired' => $invitation->expires_at->isPast(),
+                    'is_valid' => $invitation->isValid(),
+                    'created_at' => optional($invitation->created_at)->toDateTimeString(),
+                ];
+            });
+
+        return Inertia::render('Users/Invitations', [
+            'invitations' => $invitations,
+            'filters' => [
+                'search' => $search,
+                'perPage' => $perPage,
+            ],
+        ]);
+    }
+
+    /**
+     * Resend an invitation.
+     */
+    public function resendInvitation(Invitation $invitation)
+    {
+        // Only Admin and System Admin can resend invitations
+        $currentUser = auth()->user();
+        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+            abort(403, 'You do not have permission to resend invitations.');
+        }
+
+        // Check if invitation was already used
+        if ($invitation->used) {
+            return back()->withErrors(['error' => 'This invitation has already been used.']);
+        }
+
+        // Update expiration date and generate new token
+        $invitation->update([
+            'token' => Invitation::generateToken(),
+            'expires_at' => Carbon::now()->addDays(7),
+        ]);
+
+        // Resend the invitation email
+        Notification::route('mail', $invitation->email)
+            ->notify(new UserInvitation($invitation));
+
+        return back()->with('success', 'Invitation resent successfully.');
+    }
+
+    /**
+     * Cancel/delete an invitation.
+     */
+    public function cancelInvitation(Invitation $invitation)
+    {
+        // Only Admin and System Admin can cancel invitations
+        $currentUser = auth()->user();
+        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+            abort(403, 'You do not have permission to cancel invitations.');
+        }
+
+        $invitation->delete();
+
+        return back()->with('success', 'Invitation cancelled successfully.');
     }
 }

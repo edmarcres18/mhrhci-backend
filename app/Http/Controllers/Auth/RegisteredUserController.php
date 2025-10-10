@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use App\Models\Invitation;
+use App\UserRole;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,9 +19,19 @@ class RegisteredUserController extends Controller
     /**
      * Show the registration page.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('auth/Register');
+        $token = $request->query('token');
+        $invitation = null;
+
+        if ($token) {
+            $invitation = Invitation::where('token', $token)->first();
+        }
+
+        return Inertia::render('auth/Register', [
+            'token' => $token,
+            'invitationEmail' => $invitation?->email,
+        ]);
     }
 
     /**
@@ -29,11 +41,31 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request): RedirectResponse
     {
+        // Get invitation from request (set by ValidateInvitation middleware)
+        $invitation = $request->input('invitation');
+
+        if (!$invitation instanceof Invitation) {
+            return redirect()->route('login')
+                ->withErrors(['error' => 'Invalid invitation.']);
+        }
+
+        // Validate that the email matches the invitation
+        if (strtolower($request->email) !== strtolower($invitation->email)) {
+            return back()->withErrors(['email' => 'Email must match the invitation email.']);
+        }
+
+        // Create user with the role specified in the invitation
+        $invitedRole = UserRole::tryFrom($invitation->role) ?? UserRole::STAFF;
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
+            'role' => $invitedRole,
         ]);
+
+        // Mark invitation as used
+        $invitation->markAsUsed();
 
         event(new Registered($user));
 

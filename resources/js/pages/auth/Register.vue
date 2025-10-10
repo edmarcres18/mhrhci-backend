@@ -9,6 +9,20 @@ import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
 import { Form, Head } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+import { computed } from 'vue';
+
+interface Props {
+    token?: string;
+    invitationEmail?: string;
+}
+
+const props = defineProps<Props>();
+
+// Compute form defaults with invitation email
+const formDefaults = computed(() => ({
+    email: props.invitationEmail || '',
+    token: props.token || '',
+}));
 </script>
 
 <template>
@@ -19,11 +33,17 @@ import { LoaderCircle } from 'lucide-vue-next';
         <Head title="Register" />
 
         <Form
-            v-bind="RegisteredUserController.store.form()"
+            v-bind="RegisteredUserController.store.form(formDefaults)"
             :reset-on-success="['password', 'password_confirmation']"
-            v-slot="{ errors, processing }"
+            v-slot="{ errors, processing, data }"
             class="flex flex-col gap-6"
         >
+            <!-- Hidden token field -->
+            <input type="hidden" name="token" :value="props.token" />
+            
+            <!-- Hidden email field when invitation email exists to ensure it's submitted -->
+            <input v-if="props.invitationEmail" type="hidden" name="email" :value="props.invitationEmail" />
+            
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>
@@ -43,6 +63,18 @@ import { LoaderCircle } from 'lucide-vue-next';
                 <div class="grid gap-2">
                     <Label for="email">Email address</Label>
                     <Input
+                        v-if="props.invitationEmail"
+                        id="email"
+                        type="email"
+                        :tabindex="2"
+                        autocomplete="email"
+                        :value="props.invitationEmail"
+                        readonly
+                        disabled
+                        class="bg-muted cursor-not-allowed opacity-70"
+                    />
+                    <Input
+                        v-else
                         id="email"
                         type="email"
                         required
@@ -52,6 +84,9 @@ import { LoaderCircle } from 'lucide-vue-next';
                         placeholder="email@example.com"
                     />
                     <InputError :message="errors.email" />
+                    <p v-if="props.invitationEmail" class="text-xs text-muted-foreground">
+                        This email is pre-filled based on your invitation and cannot be changed.
+                    </p>
                 </div>
 
                 <div class="grid gap-2">

@@ -36,10 +36,23 @@ const {
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const isSystemAdmin = computed(() => user.value?.role === 'system_admin');
+const isStaff = computed(() => user.value?.role === 'staff');
 
 const isRefreshing = computed(() => 
     isLoadingStats.value || isLoadingOverview.value || isLoadingActivity.value
 );
+
+// Filter overview data for staff users to only show blogs and products
+const filteredOverview = computed(() => {
+    if (!isStaff.value || !overview.value) return overview.value;
+    
+    return {
+        ...overview.value,
+        datasets: overview.value.datasets.filter(
+            dataset => dataset.name === 'Blogs' || dataset.name === 'Products'
+        )
+    };
+});
 
 const handleRefresh = async () => {
     await refresh();
@@ -119,13 +132,13 @@ const handleRefresh = async () => {
                     <CardHeader>
                         <CardTitle>Overview</CardTitle>
                         <CardDescription>
-                            Monthly trends for users, blogs, and products
+                            {{ isStaff ? 'Monthly trends for blogs and products' : 'Monthly trends for users, blogs, and products' }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="pl-0 sm:pl-2">
                         <div class="h-[240px] sm:h-[300px] md:h-[350px]">
                             <OverviewChart 
-                                :data="overview" 
+                                :data="filteredOverview" 
                                 :loading="isLoadingOverview"
                             />
                         </div>

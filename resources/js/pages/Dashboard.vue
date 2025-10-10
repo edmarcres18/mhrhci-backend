@@ -128,15 +128,22 @@ const handleRefresh = async () => {
             <!-- Main Content Grid -->
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <!-- Overview Chart -->
-                <Card :class="isSystemAdmin ? 'col-span-full lg:col-span-4' : 'col-span-full lg:col-span-5'">
-                    <CardHeader>
-                        <CardTitle>Overview</CardTitle>
-                        <CardDescription>
-                            {{ isStaff ? 'Monthly trends for blogs and products' : 'Monthly trends for users, blogs, and products' }}
-                        </CardDescription>
+                <Card 
+                    :class="isStaff ? 'col-span-full' : (isSystemAdmin ? 'col-span-full lg:col-span-4' : 'col-span-full lg:col-span-5')"
+                    class="overflow-hidden"
+                >
+                    <CardHeader class="pb-3 sm:pb-4">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0 flex-1">
+                                <CardTitle class="text-base sm:text-lg">Overview</CardTitle>
+                                <CardDescription class="mt-1 text-xs sm:text-sm">
+                                    {{ isStaff ? 'Monthly trends for blogs and products' : 'Monthly trends for users, blogs, and products' }}
+                                </CardDescription>
+                            </div>
+                        </div>
                     </CardHeader>
-                    <CardContent class="pl-0 sm:pl-2">
-                        <div class="h-[240px] sm:h-[300px] md:h-[350px]">
+                    <CardContent class="px-2 pb-4 sm:px-4 sm:pb-6 md:px-6">
+                        <div class="h-[240px] sm:h-[300px] md:h-[350px] lg:h-[380px] w-full">
                             <OverviewChart 
                                 :data="filteredOverview" 
                                 :loading="isLoadingOverview"
@@ -145,8 +152,8 @@ const handleRefresh = async () => {
                     </CardContent>
                 </Card>
 
-                <!-- Recent Activity -->
-                <Card :class="isSystemAdmin ? 'col-span-full lg:col-span-3' : 'col-span-full lg:col-span-2'">
+                <!-- Recent Activity (Hidden for Staff) -->
+                <Card v-if="!isStaff" :class="isSystemAdmin ? 'col-span-full lg:col-span-3' : 'col-span-full lg:col-span-2'">
                     <CardHeader>
                         <CardTitle>Recent Activity</CardTitle>
                         <CardDescription>

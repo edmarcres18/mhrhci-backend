@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
                 'canDeleteProducts' => $user ? $user->hasAdminPrivileges() : false,
                 'canDeleteBlogs' => $user ? $user->hasAdminPrivileges() : false,
                 'canAccessUsers' => $user ? $user->hasAdminPrivileges() : false,
+                'canDeleteCustomerRegistrations' => $user ? $user->hasAdminPrivileges() : false,
                 'isSystemAdmin' => $user ? $user->isSystemAdmin() : false,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

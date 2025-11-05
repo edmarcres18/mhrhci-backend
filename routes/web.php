@@ -53,6 +53,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('site-settings/remove-logo', [SiteSettingsController::class, 'removeLogo'])->name('site-settings.remove-logo');
         Route::post('site-settings/reset', [SiteSettingsController::class, 'reset'])->name('site-settings.reset');
     });
+
+    // Customer Registrations pages (create/show/delete only managed via API)
+    Route::get('customer-registrations', function () {
+        return Inertia::render('CustomerRegistrations/Index');
+    })->name('customer-registrations.index');
+
+    Route::get('customer-registrations/create', function () {
+        return Inertia::render('CustomerRegistrations/Create');
+    })->name('customer-registrations.create');
+
+    Route::get('customer-registrations/{id}', function ($id) {
+        return Inertia::render('CustomerRegistrations/Show', ['id' => (int) $id]);
+    })->where('id', '[0-9]+')->name('customer-registrations.show');
 });
 
 require __DIR__.'/settings.php';

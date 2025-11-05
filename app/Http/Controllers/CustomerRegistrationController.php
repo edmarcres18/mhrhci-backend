@@ -170,4 +170,47 @@ class CustomerRegistrationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * API: Delete a registration by ID.
+     */
+    public function destroyApi(int $id): JsonResponse
+    {
+        try {
+            // Ensure only ADMIN or SYSTEM_ADMIN can delete
+            $user = auth()->user();
+            if (!$user || !$user->hasAdminPrivileges()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Forbidden: insufficient privileges',
+                ], 403);
+            }
+
+            $item = CustomerRegistration::find($id);
+
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Registration not found',
+                ], 404);
+            }
+
+            $item->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration deleted successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('API CustomerRegistration Destroy Error: ' . $e->getMessage(), [
+                'id' => $id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the registration',
+            ], 500);
+        }
+    }
 }

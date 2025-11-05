@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
+use App\Http\Controllers\CustomerRegistrationController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -83,6 +84,17 @@ Route::prefix('v1')->group(function () {
         Route::get('/all', [SiteInformationController::class, 'fetchAllContacts'])
             ->name('api.contacts.all');
     });
+
+    // Customer Registration API Endpoints
+    Route::get('/customer-registrations', [CustomerRegistrationController::class, 'apiIndex'])
+        ->name('api.customer-registrations.index');
+
+    Route::post('/customer-registrations', [CustomerRegistrationController::class, 'storeApi'])
+        ->name('api.customer-registrations.store');
+
+    Route::get('/customer-registrations/{id}', [CustomerRegistrationController::class, 'showApi'])
+        ->where('id', '[0-9]+')
+        ->name('api.customer-registrations.show');
 });
 
 // Site Settings API (Public) - For logo and name display

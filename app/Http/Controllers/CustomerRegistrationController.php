@@ -16,14 +16,19 @@ class CustomerRegistrationController extends Controller
     {
         try {
             $validated = $request->validate([
-                'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+                'limit' => ['nullable', 'integer', 'min:1'],
             ]);
 
-            $limit = $validated['limit'] ?? 25;
+            $limit = $validated['limit'] ?? null; // Unlimited by default
 
-            $items = CustomerRegistration::query()
-                ->latest('created_at')
-                ->limit($limit)
+            $query = CustomerRegistration::query()
+                ->latest('created_at');
+
+            if ($limit !== null) {
+                $query->limit($limit);
+            }
+
+            $items = $query
                 ->get()
                 ->map(function (CustomerRegistration $item) {
                     return [
@@ -86,14 +91,16 @@ class CustomerRegistrationController extends Controller
             ]);
 
             $payload = [
-                'entry_number' => $validated['entry_number'],
-                'name' => $validated['name'],
-                'hospital' => $validated['hospital'],
-                'address' => $validated['address'],
-                'position' => $validated['position'],
-                'contact_number' => $validated['contact_number'],
-                'email' => strtolower($validated['email']),
-                'products_interest' => $validated['products_interest'] ?? ($validated['remarks'] ?? null),
+                'entry_number' => trim($validated['entry_number']),
+                'name' => trim($validated['name']),
+                'hospital' => trim($validated['hospital']),
+                'address' => trim($validated['address']),
+                'position' => trim($validated['position']),
+                'contact_number' => trim($validated['contact_number']),
+                'email' => strtolower(trim($validated['email'])),
+                'products_interest' => isset($validated['products_interest'])
+                    ? trim($validated['products_interest'])
+                    : (isset($validated['remarks']) ? trim($validated['remarks']) : null),
             ];
 
             $item = CustomerRegistration::create($payload);

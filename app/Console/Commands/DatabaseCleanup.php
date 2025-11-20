@@ -42,7 +42,7 @@ class DatabaseCleanup extends Command
         $totalSize = 0;
 
         foreach ($files as $file) {
-            if (str_ends_with($file->getFilename(), '.sql') && $file->getMTime() < $cutoffTime) {
+            if (str_ends_with($file->getFilename(), '.sql') && $file->getMTime() <= $cutoffTime) {
                 $totalSize += $file->getSize();
                 File::delete($file->getPathname());
                 $deletedCount++;

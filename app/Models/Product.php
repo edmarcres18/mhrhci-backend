@@ -22,6 +22,7 @@ class Product extends Model
         'description',
         'images',
         'features',
+        'is_featured',
     ];
 
     /**
@@ -33,6 +34,7 @@ class Product extends Model
         'product_type' => ProductType::class,
         'images' => 'array',
         'features' => 'array',
+        'is_featured' => 'boolean',
     ];
 
     /**

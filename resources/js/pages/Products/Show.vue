@@ -18,6 +18,7 @@ interface Product {
   description?: string | null;
   images?: string[] | null;
   features?: string[] | null;
+  is_featured?: boolean | null;
   created_at?: string | null;
 }
 
@@ -154,7 +155,10 @@ watch(
       <!-- Header -->
       <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="flex-1">
-          <h1 class="text-2xl font-bold text-neutral-900 dark:text-white sm:text-3xl">{{ props.product.name }}</h1>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-bold text-neutral-900 dark:text-white sm:text-3xl">{{ props.product.name }}</h1>
+            <span v-if="props.product.is_featured" class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Featured</span>
+          </div>
           <p class="mt-2 flex items-center gap-1 text-sm text-neutral-500 dark:text-neutral-400">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -340,6 +344,12 @@ watch(
                 <span class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Features</span>
                 <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800 dark:bg-green-900 dark:text-green-200">
                   {{ props.product.features?.length || 0 }}
+                </span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
+                <span class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Featured</span>
+                <span :class="props.product.is_featured ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'" class="rounded-full px-2.5 py-0.5 text-xs font-bold">
+                  {{ props.product.is_featured ? 'Yes' : 'No' }}
                 </span>
               </div>
             </div>

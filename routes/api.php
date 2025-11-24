@@ -57,6 +57,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/products/latest', [ProductController::class, 'apiLatest'])
         ->name('api.products.latest');
 
+    Route::get('/products/featured', [ProductController::class, 'apiFeatured'])
+        ->name('api.products.featured');
+
     // Site Information Contact API Endpoints (Public)
     Route::prefix('contacts')->group(function () {
         Route::get('/email', [SiteInformationController::class, 'fetchEmail'])

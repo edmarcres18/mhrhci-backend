@@ -55,6 +55,7 @@ class ProductController extends Controller
                     'description' => $product->description,
                     'images' => $product->images,
                     'features' => $product->features,
+                    'is_featured' => (bool) $product->is_featured,
                     'created_at' => optional($product->created_at)->toDateTimeString(),
                 ];
             });
@@ -99,6 +100,7 @@ class ProductController extends Controller
             'features.*' => ['nullable', 'string', 'max:255'],
             'images' => ['nullable', 'array', 'max:5'],
             'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
+            'is_featured' => ['nullable', 'boolean'],
         ]);
 
         $imagePaths = [];
@@ -114,6 +116,7 @@ class ProductController extends Controller
             'description' => $validated['description'] ?? null,
             'features' => $validated['features'] ?? [],
             'images' => $imagePaths,
+            'is_featured' => (bool) ($validated['is_featured'] ?? false),
         ]);
 
         return redirect()
@@ -159,6 +162,7 @@ class ProductController extends Controller
             'images' => ['nullable', 'array', 'max:5'],
             'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
             'keepExistingImages' => ['nullable', 'boolean'],
+            'is_featured' => ['nullable', 'boolean'],
         ]);
 
         $keepExisting = filter_var($request->input('keepExistingImages', true), FILTER_VALIDATE_BOOLEAN);
@@ -186,6 +190,7 @@ class ProductController extends Controller
             'description' => $validated['description'] ?? null,
             'features' => $validated['features'] ?? [],
             'images' => array_values($imagePaths),
+            'is_featured' => (bool) ($validated['is_featured'] ?? $product->is_featured),
         ]);
 
         return redirect()
@@ -388,6 +393,68 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching latest products',
+            ], 500);
+        }
+    }
+
+    public function apiFeatured(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+            ]);
+
+            $limit = $validated['limit'] ?? 3;
+
+            $cacheKey = "products_featured_{$limit}";
+
+            $products = Cache::remember($cacheKey, 600, function () use ($limit) {
+                return Product::query()
+                    ->where('is_featured', true)
+                    ->latest('created_at')
+                    ->limit($limit)
+                    ->get();
+            });
+
+            $transformedProducts = $products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'product_type' => $product->product_type->value,
+                    'product_type_label' => $product->product_type->displayName(),
+                    'description' => $product->description,
+                    'excerpt' => $this->generateExcerpt($product->description, 150),
+                    'images' => $this->formatImageUrls($product->images),
+                    'features' => $product->features ?? [],
+                    'is_featured' => (bool) $product->is_featured,
+                    'created_at' => $product->created_at?->toIso8601String(),
+                    'updated_at' => $product->updated_at?->toIso8601String(),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $transformedProducts,
+                'meta' => [
+                    'count' => $transformedProducts->count(),
+                    'limit' => $limit,
+                ],
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('API Product Featured Error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching featured products',
             ], 500);
         }
     }

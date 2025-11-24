@@ -28,6 +28,7 @@ const form = useForm({
   description: '',
   features: [] as string[],
   images: [] as File[],
+  is_featured: false as boolean,
 });
 
 const newFeature = ref('');
@@ -161,13 +162,14 @@ function submit() {
     product_type: form.product_type,
     description: form.description,
     features: form.features,
+    is_featured: form.is_featured,
   };
   const data = new FormData();
   Object.entries(payload).forEach(([k, v]) => {
     if (Array.isArray(v)) {
       v.forEach((val, idx) => data.append(`${k}[${idx}]`, val as any));
     } else if (v !== undefined && v !== null) {
-      data.append(k, v as any);
+      data.append(k, v === true ? '1' : (v === false ? '0' : (v as any)));
     }
   });
   form.images.forEach((file) => data.append('images[]', file));
@@ -252,6 +254,24 @@ const remainingDescChars = computed(() => MAX_DESCRIPTION_LENGTH - form.descript
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
             <span>{{ form.errors.product_type }}</span>
+          </div>
+        </div>
+
+        <!-- Featured Toggle -->
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-200">Featured</label>
+          <div class="flex items-center justify-between rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+            <span class="text-sm text-neutral-600 dark:text-neutral-300">Mark as featured product</span>
+            <button type="button" @click="form.is_featured = !form.is_featured" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+              :class="form.is_featured ? 'bg-black dark:bg-white' : 'bg-neutral-300 dark:bg-neutral-700'">
+              <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform dark:bg-black" :class="form.is_featured ? 'translate-x-5' : 'translate-x-1'"></span>
+            </button>
+          </div>
+          <div v-if="form.errors.is_featured" class="flex items-center gap-1 text-sm text-red-600">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ form.errors.is_featured }}</span>
           </div>
         </div>
 

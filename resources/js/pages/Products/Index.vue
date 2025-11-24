@@ -21,6 +21,7 @@ interface Product {
   description?: string | null;
   images?: string[] | null;
   features?: string[] | null;
+  is_featured?: boolean;
   created_at?: string | null;
 }
 
@@ -259,6 +260,7 @@ watch(
                 <div class="flex items-center gap-2">
                   <div class="truncate font-medium">{{ p.name }}</div>
                   <span v-if="p.product_type_label" class="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium" :class="p.product_type === 'medical_equipment' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">{{ p.product_type_label }}</span>
+                  <span v-if="p.is_featured" class="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Featured</span>
                 </div>
                 <div class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{{ new Date(p.created_at || '').toLocaleDateString() }}</div>
               </div>
@@ -302,6 +304,9 @@ watch(
                       </div>
                       <div>
                         <div class="font-medium">{{ p.name }}</div>
+                        <div class="mt-1">
+                          <span v-if="p.is_featured" class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Featured</span>
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -351,4 +356,3 @@ watch(
     </Dialog>
   </AppLayout>
 </template>
-

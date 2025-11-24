@@ -51,8 +51,6 @@ class Blog extends Model
 
     /**
      * Clear all blog API related caches.
-     * 
-     * @param int|null $blogId
      */
     protected static function clearApiCache(?int $blogId = null): void
     {

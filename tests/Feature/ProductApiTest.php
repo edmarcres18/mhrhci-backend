@@ -112,7 +112,7 @@ class ProductApiTest extends TestCase
         $response = $this->getJson('/api/v1/products?sortBy=name&sortOrder=asc');
 
         $response->assertStatus(200);
-        
+
         $data = $response->json('data');
         $this->assertEquals('Apple Product', $data[0]['name']);
     }
@@ -204,7 +204,7 @@ class ProductApiTest extends TestCase
         $response = $this->getJson('/api/v1/products/latest?limit=3');
 
         $response->assertStatus(200);
-        
+
         $data = $response->json('data');
         $this->assertEquals($newest->id, $data[0]['id']);
         $this->assertEquals($middle->id, $data[1]['id']);
@@ -232,7 +232,7 @@ class ProductApiTest extends TestCase
     public function test_api_index_uses_cache(): void
     {
         Cache::flush(); // Clear cache first
-        
+
         Product::factory()->count(5)->create();
 
         // First request - should cache
@@ -240,14 +240,14 @@ class ProductApiTest extends TestCase
         $response1->assertStatus(200);
 
         // Check cache exists
-        $cacheKey = 'products_api_' . md5(json_encode([
+        $cacheKey = 'products_api_'.md5(json_encode([
             'search' => '',
             'perPage' => 10,
             'page' => 1,
             'sortBy' => 'created_at',
             'sortOrder' => 'desc',
         ]));
-        
+
         $this->assertTrue(Cache::has($cacheKey));
     }
 
@@ -257,7 +257,7 @@ class ProductApiTest extends TestCase
     public function test_api_latest_uses_cache(): void
     {
         Cache::flush();
-        
+
         Product::factory()->count(5)->create();
 
         // First request - should cache
@@ -278,7 +278,7 @@ class ProductApiTest extends TestCase
         // Make multiple requests
         for ($i = 0; $i < 65; $i++) {
             $response = $this->getJson('/api/v1/products');
-            
+
             if ($i < 60) {
                 $response->assertStatus(200);
             } else {
@@ -301,7 +301,7 @@ class ProductApiTest extends TestCase
         $response = $this->getJson('/api/v1/products');
 
         $response->assertStatus(200);
-        
+
         $images = $response->json('data.0.images');
         $this->assertNotEmpty($images);
         $this->assertStringContainsString('storage/products/test-product.jpg', $images[0]);
@@ -313,7 +313,7 @@ class ProductApiTest extends TestCase
     public function test_api_generates_excerpt(): void
     {
         $longDescription = str_repeat('Lorem ipsum dolor sit amet. ', 50);
-        
+
         Product::factory()->create([
             'description' => $longDescription,
         ]);
@@ -321,7 +321,7 @@ class ProductApiTest extends TestCase
         $response = $this->getJson('/api/v1/products');
 
         $response->assertStatus(200);
-        
+
         $excerpt = $response->json('data.0.excerpt');
         $this->assertNotNull($excerpt);
         $this->assertLessThanOrEqual(153, strlen($excerpt)); // 150 + '...'
@@ -340,7 +340,7 @@ class ProductApiTest extends TestCase
         $response = $this->getJson('/api/v1/products');
 
         $response->assertStatus(200);
-        
+
         $features = $response->json('data.0.features');
         $this->assertIsArray($features);
         $this->assertCount(3, $features);
@@ -359,7 +359,7 @@ class ProductApiTest extends TestCase
         $response = $this->getJson('/api/v1/products');
 
         $response->assertStatus(200);
-        
+
         $features = $response->json('data.0.features');
         $this->assertIsArray($features);
         $this->assertEmpty($features);

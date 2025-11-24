@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Blog;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,7 +20,7 @@ class BlogController extends Controller
         $search = (string) $request->query('search', '');
         $perPage = (int) $request->query('perPage', 10);
         $allowed = [10, 25, 50, 100];
-        if (!in_array($perPage, $allowed, true)) {
+        if (! in_array($perPage, $allowed, true)) {
             $perPage = 10;
         }
 
@@ -130,7 +130,7 @@ class BlogController extends Controller
         $imagePaths = $keepExisting ? ($blog->images ?? []) : [];
 
         if ($request->hasFile('images')) {
-            if (!$keepExisting) {
+            if (! $keepExisting) {
                 foreach (($blog->images ?? []) as $old) {
                     if ($old && Storage::disk('public')->exists($old)) {
                         Storage::disk('public')->delete($old);
@@ -138,7 +138,9 @@ class BlogController extends Controller
                 }
             }
             foreach ($request->file('images') as $image) {
-                if (count($imagePaths) >= 5) break;
+                if (count($imagePaths) >= 5) {
+                    break;
+                }
                 $imagePaths[] = $image->store('blogs', 'public');
             }
         }
@@ -161,7 +163,7 @@ class BlogController extends Controller
     {
         // Only System Admin and Admin can delete blogs
         $user = auth()->user();
-        if (!$user || !$user->hasAdminPrivileges()) {
+        if (! $user || ! $user->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to delete blogs.');
         }
 
@@ -180,9 +182,6 @@ class BlogController extends Controller
 
     /**
      * API: Get all blogs with pagination, filtering, and caching.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
     public function apiIndex(Request $request): JsonResponse
     {
@@ -202,7 +201,7 @@ class BlogController extends Controller
             $sortOrder = $validated['sortOrder'] ?? 'desc';
 
             // Create cache key based on request parameters
-            $cacheKey = 'blogs_api_' . md5(json_encode([
+            $cacheKey = 'blogs_api_'.md5(json_encode([
                 'search' => $search,
                 'perPage' => $perPage,
                 'page' => $request->query('page', 1),
@@ -215,7 +214,7 @@ class BlogController extends Controller
                 $query = Blog::query();
 
                 // Apply search filter
-                if (!empty($search)) {
+                if (! empty($search)) {
                     $query->where(function ($q) use ($search) {
                         $q->where('title', 'like', "%{$search}%")
                             ->orWhere('content', 'like', "%{$search}%");
@@ -267,10 +266,10 @@ class BlogController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('API Blog Index Error: ' . $e->getMessage(), [
+            \Log::error('API Blog Index Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching blogs',
@@ -280,9 +279,6 @@ class BlogController extends Controller
 
     /**
      * API: Get latest N blogs with caching.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
     public function apiLatest(Request $request): JsonResponse
     {
@@ -334,10 +330,10 @@ class BlogController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('API Blog Latest Error: ' . $e->getMessage(), [
+            \Log::error('API Blog Latest Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching latest blogs',
@@ -347,9 +343,6 @@ class BlogController extends Controller
 
     /**
      * API: Get a single blog by ID with caching.
-     * 
-     * @param int $id
-     * @return JsonResponse
      */
     public function showApi(int $id): JsonResponse
     {
@@ -363,7 +356,7 @@ class BlogController extends Controller
             });
 
             // Check if blog exists
-            if (!$blog) {
+            if (! $blog) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Blog not found',
@@ -390,11 +383,11 @@ class BlogController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Blog Show Error: ' . $e->getMessage(), [
+            \Log::error('API Blog Show Error: '.$e->getMessage(), [
                 'id' => $id,
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching the blog',
@@ -404,17 +397,14 @@ class BlogController extends Controller
 
     /**
      * API: Get related blogs based on title and content similarity.
-     * 
-     * @param int $id
-     * @return JsonResponse
      */
     public function relatedBlogs(int $id): JsonResponse
     {
         try {
             // Check if the blog exists first
             $currentBlog = Blog::find($id);
-            
-            if (!$currentBlog) {
+
+            if (! $currentBlog) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Blog not found',
@@ -430,18 +420,18 @@ class BlogController extends Controller
                 $commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'are', 'was', 'were'];
                 $titleWords = array_filter(
                     preg_split('/\s+/', strtolower($currentBlog->title)),
-                    fn($word) => strlen($word) > 2 && !in_array($word, $commonWords)
+                    fn ($word) => strlen($word) > 2 && ! in_array($word, $commonWords)
                 );
 
                 // Build query to find related blogs
                 $query = Blog::where('id', '!=', $id);
 
                 // Search for blogs with similar titles or content
-                if (!empty($titleWords)) {
-                    $query->where(function ($q) use ($titleWords, $currentBlog) {
+                if (! empty($titleWords)) {
+                    $query->where(function ($q) use ($titleWords) {
                         foreach ($titleWords as $word) {
                             $q->orWhere('title', 'like', "%{$word}%")
-                              ->orWhere('content', 'like', "%{$word}%");
+                                ->orWhere('content', 'like', "%{$word}%");
                         }
                     });
                 }
@@ -483,11 +473,11 @@ class BlogController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Blog Related Error: ' . $e->getMessage(), [
+            \Log::error('API Blog Related Error: '.$e->getMessage(), [
                 'id' => $id,
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching related blogs',
@@ -497,10 +487,6 @@ class BlogController extends Controller
 
     /**
      * Helper: Generate excerpt from content
-     * 
-     * @param string|null $content
-     * @param int $length
-     * @return string|null
      */
     private function generateExcerpt(?string $content, int $length = 150): ?string
     {
@@ -509,19 +495,16 @@ class BlogController extends Controller
         }
 
         $content = strip_tags($content);
-        
+
         if (mb_strlen($content) <= $length) {
             return $content;
         }
 
-        return mb_substr($content, 0, $length) . '...';
+        return mb_substr($content, 0, $length).'...';
     }
 
     /**
      * Helper: Format image paths to full URLs
-     * 
-     * @param array|null $images
-     * @return array
      */
     private function formatImageUrls(?array $images): array
     {
@@ -533,7 +516,8 @@ class BlogController extends Controller
             if (filter_var($image, FILTER_VALIDATE_URL)) {
                 return $image;
             }
-            return asset('storage/' . $image);
+
+            return asset('storage/'.$image);
         }, $images);
     }
 }

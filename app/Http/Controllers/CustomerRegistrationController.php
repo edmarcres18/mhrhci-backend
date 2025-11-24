@@ -61,7 +61,7 @@ class CustomerRegistrationController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('API CustomerRegistration Index Error: ' . $e->getMessage(), [
+            Log::error('API CustomerRegistration Index Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -116,7 +116,7 @@ class CustomerRegistrationController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('API CustomerRegistration Store Error: ' . $e->getMessage(), [
+            Log::error('API CustomerRegistration Store Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -135,7 +135,7 @@ class CustomerRegistrationController extends Controller
         try {
             $item = CustomerRegistration::find($id);
 
-            if (!$item) {
+            if (! $item) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Registration not found',
@@ -159,7 +159,7 @@ class CustomerRegistrationController extends Controller
                 ],
             ], 200);
         } catch (\Exception $e) {
-            Log::error('API CustomerRegistration Show Error: ' . $e->getMessage(), [
+            Log::error('API CustomerRegistration Show Error: '.$e->getMessage(), [
                 'id' => $id,
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -179,7 +179,7 @@ class CustomerRegistrationController extends Controller
         try {
             // Ensure only ADMIN or SYSTEM_ADMIN can delete
             $user = auth()->user();
-            if (!$user || !$user->hasAdminPrivileges()) {
+            if (! $user || ! $user->hasAdminPrivileges()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Forbidden: insufficient privileges',
@@ -188,7 +188,7 @@ class CustomerRegistrationController extends Controller
 
             $item = CustomerRegistration::find($id);
 
-            if (!$item) {
+            if (! $item) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Registration not found',
@@ -202,7 +202,7 @@ class CustomerRegistrationController extends Controller
                 'message' => 'Registration deleted successfully',
             ], 200);
         } catch (\Exception $e) {
-            Log::error('API CustomerRegistration Destroy Error: ' . $e->getMessage(), [
+            Log::error('API CustomerRegistration Destroy Error: '.$e->getMessage(), [
                 'id' => $id,
                 'trace' => $e->getTraceAsString(),
             ]);

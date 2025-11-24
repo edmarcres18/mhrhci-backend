@@ -62,8 +62,8 @@ const managementSections = ref([
 
 // Auto-cycle through cards
 let cardInterval: number | null = null;
-let cursorInterval: number | null = null;
-let actionInterval: number | null = null;
+const cursorInterval: number | null = null;
+const actionInterval: number | null = null;
 
 const moveCursorToCard = (cardIndex: number) => {
     const targetPos = cardPositions[cardIndex];

@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\ProductType;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,12 +23,12 @@ class ProductController extends Controller
         $productType = (string) $request->query('product_type', '');
         $perPage = (int) $request->query('perPage', 10);
         $allowed = [10, 25, 50, 100];
-        if (!in_array($perPage, $allowed, true)) {
+        if (! in_array($perPage, $allowed, true)) {
             $perPage = 10;
         }
 
         $query = Product::query();
-        
+
         // Apply search filter
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -36,7 +36,7 @@ class ProductController extends Controller
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
-        
+
         // Apply product type filter
         if ($productType !== '' && in_array($productType, ProductType::values(), true)) {
             $query->where('product_type', $productType);
@@ -66,7 +66,7 @@ class ProductController extends Controller
                 'product_type' => $productType,
                 'perPage' => $perPage,
             ],
-            'productTypes' => collect(ProductType::all())->map(fn($type) => [
+            'productTypes' => collect(ProductType::all())->map(fn ($type) => [
                 'value' => $type->value,
                 'label' => $type->displayName(),
             ])->toArray(),
@@ -79,7 +79,7 @@ class ProductController extends Controller
     public function create(): Response
     {
         return Inertia::render('Products/Create', [
-            'productTypes' => collect(ProductType::all())->map(fn($type) => [
+            'productTypes' => collect(ProductType::all())->map(fn ($type) => [
                 'value' => $type->value,
                 'label' => $type->displayName(),
             ])->toArray(),
@@ -138,7 +138,7 @@ class ProductController extends Controller
     {
         return Inertia::render('Products/Edit', [
             'product' => $product,
-            'productTypes' => collect(ProductType::all())->map(fn($type) => [
+            'productTypes' => collect(ProductType::all())->map(fn ($type) => [
                 'value' => $type->value,
                 'label' => $type->displayName(),
             ])->toArray(),
@@ -165,7 +165,7 @@ class ProductController extends Controller
         $imagePaths = $keepExisting ? ($product->images ?? []) : [];
 
         if ($request->hasFile('images')) {
-            if (!$keepExisting) {
+            if (! $keepExisting) {
                 foreach (($product->images ?? []) as $old) {
                     if ($old && Storage::disk('public')->exists($old)) {
                         Storage::disk('public')->delete($old);
@@ -173,7 +173,9 @@ class ProductController extends Controller
                 }
             }
             foreach ($request->file('images') as $image) {
-                if (count($imagePaths) >= 5) break;
+                if (count($imagePaths) >= 5) {
+                    break;
+                }
                 $imagePaths[] = $image->store('products', 'public');
             }
         }
@@ -198,7 +200,7 @@ class ProductController extends Controller
     {
         // Only System Admin and Admin can delete products
         $user = auth()->user();
-        if (!$user || !$user->hasAdminPrivileges()) {
+        if (! $user || ! $user->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to delete products.');
         }
 
@@ -217,9 +219,6 @@ class ProductController extends Controller
 
     /**
      * API: Get all products with pagination, filtering, and caching.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
     public function apiIndex(Request $request): JsonResponse
     {
@@ -241,7 +240,7 @@ class ProductController extends Controller
             $sortOrder = $validated['sortOrder'] ?? 'desc';
 
             // Create cache key based on request parameters
-            $cacheKey = 'products_api_' . md5(json_encode([
+            $cacheKey = 'products_api_'.md5(json_encode([
                 'search' => $search,
                 'product_type' => $productType,
                 'perPage' => $perPage,
@@ -255,15 +254,15 @@ class ProductController extends Controller
                 $query = Product::query();
 
                 // Apply search filter
-                if (!empty($search)) {
+                if (! empty($search)) {
                     $query->where(function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%")
                             ->orWhere('description', 'like', "%{$search}%");
                     });
                 }
-                
+
                 // Apply product type filter
-                if (!empty($productType)) {
+                if (! empty($productType)) {
                     $query->where('product_type', $productType);
                 }
 
@@ -315,10 +314,10 @@ class ProductController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('API Product Index Error: ' . $e->getMessage(), [
+            \Log::error('API Product Index Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching products',
@@ -328,9 +327,6 @@ class ProductController extends Controller
 
     /**
      * API: Get latest N products with caching.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
     public function apiLatest(Request $request): JsonResponse
     {
@@ -385,10 +381,10 @@ class ProductController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('API Product Latest Error: ' . $e->getMessage(), [
+            \Log::error('API Product Latest Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching latest products',
@@ -398,10 +394,6 @@ class ProductController extends Controller
 
     /**
      * Helper: Generate excerpt from content
-     * 
-     * @param string|null $content
-     * @param int $length
-     * @return string|null
      */
     private function generateExcerpt(?string $content, int $length = 150): ?string
     {
@@ -410,19 +402,16 @@ class ProductController extends Controller
         }
 
         $content = strip_tags($content);
-        
+
         if (mb_strlen($content) <= $length) {
             return $content;
         }
 
-        return mb_substr($content, 0, $length) . '...';
+        return mb_substr($content, 0, $length).'...';
     }
 
     /**
      * Helper: Format image paths to full URLs
-     * 
-     * @param array|null $images
-     * @return array
      */
     private function formatImageUrls(?array $images): array
     {
@@ -434,7 +423,8 @@ class ProductController extends Controller
             if (filter_var($image, FILTER_VALIDATE_URL)) {
                 return $image;
             }
-            return asset('storage/' . $image);
+
+            return asset('storage/'.$image);
         }, $images);
     }
 }

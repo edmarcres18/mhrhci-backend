@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Blog;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -20,8 +18,6 @@ class DashboardController extends Controller
 
     /**
      * Get dashboard statistics.
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -51,15 +47,13 @@ class DashboardController extends Controller
 
     /**
      * Get overview chart data (monthly trends).
-     *
-     * @return JsonResponse
      */
     public function overview(): JsonResponse
     {
         try {
             $data = Cache::remember('dashboard_overview', self::CACHE_DURATION, function () {
                 $months = $this->getLast12Months();
-                
+
                 return [
                     'labels' => $months->pluck('label')->toArray(),
                     'datasets' => [
@@ -94,8 +88,6 @@ class DashboardController extends Controller
 
     /**
      * Get recent activities (latest created items).
-     *
-     * @return JsonResponse
      */
     public function recentActivity(): JsonResponse
     {
@@ -161,8 +153,6 @@ class DashboardController extends Controller
 
     /**
      * Clear dashboard cache manually.
-     *
-     * @return JsonResponse
      */
     public function clearCache(): JsonResponse
     {
@@ -186,22 +176,20 @@ class DashboardController extends Controller
 
     /**
      * Get user statistics.
-     *
-     * @return array
      */
     private function getUserStats(): array
     {
         $total = User::count();
         $lastMonth = User::where('created_at', '>=', now()->subMonth())->count();
         $lastWeek = User::where('created_at', '>=', now()->subWeek())->count();
-        
+
         // Calculate percentage change from previous month
         $twoMonthsAgo = User::whereBetween('created_at', [
             now()->subMonths(2),
-            now()->subMonth()
+            now()->subMonth(),
         ])->count();
-        
-        $percentageChange = $twoMonthsAgo > 0 
+
+        $percentageChange = $twoMonthsAgo > 0
             ? round((($lastMonth - $twoMonthsAgo) / $twoMonthsAgo) * 100, 1)
             : ($lastMonth > 0 ? 100 : 0);
 
@@ -216,22 +204,20 @@ class DashboardController extends Controller
 
     /**
      * Get blog statistics.
-     *
-     * @return array
      */
     private function getBlogStats(): array
     {
         $total = Blog::count();
         $lastMonth = Blog::where('created_at', '>=', now()->subMonth())->count();
         $lastWeek = Blog::where('created_at', '>=', now()->subWeek())->count();
-        
+
         // Calculate percentage change from previous month
         $twoMonthsAgo = Blog::whereBetween('created_at', [
             now()->subMonths(2),
-            now()->subMonth()
+            now()->subMonth(),
         ])->count();
-        
-        $percentageChange = $twoMonthsAgo > 0 
+
+        $percentageChange = $twoMonthsAgo > 0
             ? round((($lastMonth - $twoMonthsAgo) / $twoMonthsAgo) * 100, 1)
             : ($lastMonth > 0 ? 100 : 0);
 
@@ -246,22 +232,20 @@ class DashboardController extends Controller
 
     /**
      * Get product statistics.
-     *
-     * @return array
      */
     private function getProductStats(): array
     {
         $total = Product::count();
         $lastMonth = Product::where('created_at', '>=', now()->subMonth())->count();
         $lastWeek = Product::where('created_at', '>=', now()->subWeek())->count();
-        
+
         // Calculate percentage change from previous month
         $twoMonthsAgo = Product::whereBetween('created_at', [
             now()->subMonths(2),
-            now()->subMonth()
+            now()->subMonth(),
         ])->count();
-        
-        $percentageChange = $twoMonthsAgo > 0 
+
+        $percentageChange = $twoMonthsAgo > 0
             ? round((($lastMonth - $twoMonthsAgo) / $twoMonthsAgo) * 100, 1)
             : ($lastMonth > 0 ? 100 : 0);
 
@@ -276,23 +260,21 @@ class DashboardController extends Controller
 
     /**
      * Get activity statistics (combined recent activity).
-     *
-     * @return array
      */
     private function getActivityStats(): array
     {
         $now = now();
         $lastHour = $now->copy()->subHour();
-        
+
         $usersLastHour = User::where('created_at', '>=', $lastHour)->count();
         $blogsLastHour = Blog::where('created_at', '>=', $lastHour)->count();
         $productsLastHour = Product::where('created_at', '>=', $lastHour)->count();
-        
+
         $totalActivity = $usersLastHour + $blogsLastHour + $productsLastHour;
-        
+
         // Calculate activity from previous hour for comparison
         $twoHoursAgo = $now->copy()->subHours(2);
-        $previousHourActivity = 
+        $previousHourActivity =
             User::whereBetween('created_at', [$twoHoursAgo, $lastHour])->count() +
             Blog::whereBetween('created_at', [$twoHoursAgo, $lastHour])->count() +
             Product::whereBetween('created_at', [$twoHoursAgo, $lastHour])->count();
@@ -316,6 +298,7 @@ class DashboardController extends Controller
     {
         return collect(range(11, 0))->map(function ($monthsAgo) {
             $date = now()->subMonths($monthsAgo);
+
             return [
                 'label' => $date->format('M Y'),
                 'month' => $date->month,
@@ -329,9 +312,7 @@ class DashboardController extends Controller
     /**
      * Get monthly data for a specific model.
      *
-     * @param string $model
-     * @param \Illuminate\Support\Collection $months
-     * @return array
+     * @param  \Illuminate\Support\Collection  $months
      */
     private function getMonthlyData(string $model, $months): array
     {
@@ -345,27 +326,23 @@ class DashboardController extends Controller
 
     /**
      * Generate Gravatar URL for email.
-     *
-     * @param string $email
-     * @return string
      */
     private function getAvatarUrl(string $email): string
     {
         $hash = md5(strtolower(trim($email)));
+
         return "https://www.gravatar.com/avatar/{$hash}?d=mp&s=40";
     }
 
     /**
      * Get latest database backup info (System Admin only).
-     *
-     * @return JsonResponse
      */
     public function latestBackup(): JsonResponse
     {
         try {
             // Check if user is system admin
             $currentUser = auth()->user();
-            if (!$currentUser || !$currentUser->isSystemAdmin()) {
+            if (! $currentUser || ! $currentUser->isSystemAdmin()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized. System Admin access required.',
@@ -373,9 +350,9 @@ class DashboardController extends Controller
             }
 
             $data = Cache::remember('dashboard_latest_backup', self::CACHE_DURATION, function () {
-                $backupPath = storage_path('app' . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR . 'database');
-                
-                if (!File::exists($backupPath)) {
+                $backupPath = storage_path('app'.DIRECTORY_SEPARATOR.'backups'.DIRECTORY_SEPARATOR.'database');
+
+                if (! File::exists($backupPath)) {
                     return null;
                 }
 
@@ -418,19 +395,15 @@ class DashboardController extends Controller
 
     /**
      * Format bytes to human-readable format.
-     *
-     * @param int $bytes
-     * @param int $precision
-     * @return string
      */
     private function formatBytes(int $bytes, int $precision = 2): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
-        
-        return round($bytes, $precision) . ' ' . $units[$i];
+
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

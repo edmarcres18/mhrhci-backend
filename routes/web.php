@@ -1,15 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\BlogController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
-use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserHasAdminPrivileges;
 use App\Http\Middleware\EnsureUserIsSystemAdmin;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -23,20 +23,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::resource('blogs', BlogController::class);
     Route::resource('users', UserController::class);
-    
+
     // User invitation routes
     Route::get('users-invite', [UserController::class, 'inviteForm'])->name('users.invite.form');
     Route::post('users-invite', [UserController::class, 'sendInvitation'])->name('users.invite.send');
     Route::get('invitations', [UserController::class, 'invitations'])->name('invitations.index');
     Route::post('invitations/{invitation}/resend', [UserController::class, 'resendInvitation'])->name('invitations.resend');
     Route::delete('invitations/{invitation}', [UserController::class, 'cancelInvitation'])->name('invitations.cancel');
-    
+
     // Site Information - Single record management (Admin only)
     Route::middleware([EnsureUserHasAdminPrivileges::class])->group(function () {
         Route::get('site-information', [SiteInformationController::class, 'index'])->name('site-information.index');
         Route::post('site-information', [SiteInformationController::class, 'store'])->name('site-information.store');
         Route::delete('site-information', [SiteInformationController::class, 'destroy'])->name('site-information.destroy');
-        
+
+        Route::get('hero-backgrounds', function () {
+            return Inertia::render('HeroBackgrounds/Index');
+        })->name('hero-backgrounds.index');
+
         // Database Backup Management (Admin only)
         Route::get('database-backup', [DatabaseBackupController::class, 'index'])->name('database-backup.index');
         Route::post('database-backup/create', [DatabaseBackupController::class, 'backup'])->name('database-backup.create');

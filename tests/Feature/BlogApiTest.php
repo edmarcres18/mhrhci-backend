@@ -111,7 +111,7 @@ class BlogApiTest extends TestCase
         $response = $this->getJson('/api/v1/blogs?sortBy=title&sortOrder=asc');
 
         $response->assertStatus(200);
-        
+
         $data = $response->json('data');
         $this->assertEquals('Apple', $data[0]['title']);
     }
@@ -202,7 +202,7 @@ class BlogApiTest extends TestCase
         $response = $this->getJson('/api/v1/blogs/latest?limit=3');
 
         $response->assertStatus(200);
-        
+
         $data = $response->json('data');
         $this->assertEquals($newest->id, $data[0]['id']);
         $this->assertEquals($middle->id, $data[1]['id']);
@@ -230,7 +230,7 @@ class BlogApiTest extends TestCase
     public function test_api_index_uses_cache(): void
     {
         Cache::flush(); // Clear cache first
-        
+
         Blog::factory()->count(5)->create();
 
         // First request - should cache
@@ -238,14 +238,14 @@ class BlogApiTest extends TestCase
         $response1->assertStatus(200);
 
         // Check cache exists
-        $cacheKey = 'blogs_api_' . md5(json_encode([
+        $cacheKey = 'blogs_api_'.md5(json_encode([
             'search' => '',
             'perPage' => 10,
             'page' => 1,
             'sortBy' => 'created_at',
             'sortOrder' => 'desc',
         ]));
-        
+
         $this->assertTrue(Cache::has($cacheKey));
     }
 
@@ -255,7 +255,7 @@ class BlogApiTest extends TestCase
     public function test_api_latest_uses_cache(): void
     {
         Cache::flush();
-        
+
         Blog::factory()->count(5)->create();
 
         // First request - should cache
@@ -276,7 +276,7 @@ class BlogApiTest extends TestCase
         // Make multiple requests
         for ($i = 0; $i < 65; $i++) {
             $response = $this->getJson('/api/v1/blogs');
-            
+
             if ($i < 60) {
                 $response->assertStatus(200);
             } else {
@@ -299,7 +299,7 @@ class BlogApiTest extends TestCase
         $response = $this->getJson('/api/v1/blogs');
 
         $response->assertStatus(200);
-        
+
         $images = $response->json('data.0.images');
         $this->assertNotEmpty($images);
         $this->assertStringContainsString('storage/blogs/test-image.jpg', $images[0]);
@@ -311,7 +311,7 @@ class BlogApiTest extends TestCase
     public function test_api_generates_excerpt(): void
     {
         $longContent = str_repeat('Lorem ipsum dolor sit amet. ', 50);
-        
+
         Blog::factory()->create([
             'content' => $longContent,
         ]);
@@ -319,7 +319,7 @@ class BlogApiTest extends TestCase
         $response = $this->getJson('/api/v1/blogs');
 
         $response->assertStatus(200);
-        
+
         $excerpt = $response->json('data.0.excerpt');
         $this->assertNotNull($excerpt);
         $this->assertLessThanOrEqual(153, strlen($excerpt)); // 150 + '...'

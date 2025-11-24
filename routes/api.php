@@ -111,6 +111,8 @@ Route::get('/site-settings', [SiteSettingsController::class, 'fetchSiteSettings'
 // Hero Backgrounds API (Public)
 Route::get('/hero-backgrounds', [HeroBackgroundController::class, 'index'])
     ->name('api.hero-backgrounds.index');
+Route::get('/hero-backgrounds/frontend', [HeroBackgroundController::class, 'frontend'])
+    ->name('api.hero-backgrounds.frontend');
 Route::post('/hero-backgrounds', [HeroBackgroundController::class, 'store'])
     ->middleware(['web', 'auth', EnsureUserHasAdminPrivileges::class])
     ->name('api.hero-backgrounds.store');

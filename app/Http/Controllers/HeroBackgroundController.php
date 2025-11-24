@@ -6,6 +6,7 @@ use App\Http\Requests\HeroBackgroundUploadRequest;
 use App\Http\Resources\HeroBackgroundResource;
 use App\Models\HeroBackground;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -80,6 +81,8 @@ class HeroBackgroundController extends Controller
 
                 DB::commit();
 
+                Cache::forget('hero_backgrounds_frontend');
+
                 $items = HeroBackground::orderBy('created_at', 'asc')->get();
 
                 return response()->json([
@@ -137,6 +140,8 @@ class HeroBackgroundController extends Controller
 
             $items = HeroBackground::orderBy('created_at', 'asc')->get();
 
+            Cache::forget('hero_backgrounds_frontend');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Image deleted successfully',
@@ -155,6 +160,39 @@ class HeroBackgroundController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while deleting the image',
+            ], 500);
+        }
+    }
+
+    public function frontend(): JsonResponse
+    {
+        try {
+            $images = Cache::remember('hero_backgrounds_frontend', 3600, function () {
+                return HeroBackground::orderBy('created_at', 'asc')
+                    ->get()
+                    ->map(function (HeroBackground $item) {
+                        return $item->url;
+                    })
+                    ->values()
+                    ->toArray();
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $images,
+                'meta' => [
+                    'count' => count($images),
+                    'max' => 5,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('HeroBackground frontend error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching hero backgrounds',
             ], 500);
         }
     }

@@ -102,6 +102,11 @@ Route::prefix('v1')->group(function () {
         ->where('id', '[0-9]+')
         ->middleware(['web', 'auth', EnsureUserHasAdminPrivileges::class])
         ->name('api.customer-registrations.destroy');
+
+    Route::get('/hero-backgrounds', [HeroBackgroundController::class, 'index'])
+        ->name('api.v1.hero-backgrounds.index');
+    Route::get('/hero-backgrounds/frontend', [HeroBackgroundController::class, 'frontend'])
+        ->name('api.v1.hero-backgrounds.frontend');
 });
 
 // Site Settings API (Public) - For logo and name display

@@ -310,7 +310,7 @@ class DatabaseBackupController extends Controller
         $password = $config['password'] ?? '';
 
         $command = sprintf(
-            'mysqldump --host=%s --port=%d --user=%s --password=%s --skip-comments --no-tablespaces %s > %s',
+            'mysqldump --host=%s --port=%d --user=%s --password=%s --single-transaction --quick --add-drop-table --default-character-set=utf8mb4 --set-gtid-purged=OFF --routines --events --triggers --hex-blob --column-statistics=0 --no-tablespaces --order-by-primary %s > %s',
             escapeshellarg($host),
             $port,
             escapeshellarg($username),
@@ -343,6 +343,7 @@ class DatabaseBackupController extends Controller
         $tables = DB::select('SHOW TABLES');
         $dump = "-- MySQL Database Backup\n";
         $dump .= '-- Generated: '.date('Y-m-d H:i:s')."\n\n";
+        $dump .= "SET NAMES utf8mb4;\n";
         $dump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
         foreach ($tables as $table) {

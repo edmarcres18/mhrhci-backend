@@ -72,9 +72,10 @@ class BlogController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
             'images' => ['nullable', 'array', 'max:5'],
-            'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
+            'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif,gif', 'max:10240'],
         ]);
 
+        $this->ensureStorageSymlink();
         $imagePaths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
@@ -122,27 +123,34 @@ class BlogController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
             'images' => ['nullable', 'array', 'max:5'],
-            'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
+            'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif,gif', 'max:10240'],
             'keepExistingImages' => ['nullable', 'boolean'],
         ]);
 
+        $this->ensureStorageSymlink();
         $keepExisting = filter_var($request->input('keepExistingImages', true), FILTER_VALIDATE_BOOLEAN);
         $imagePaths = $keepExisting ? ($blog->images ?? []) : [];
 
-        if ($request->hasFile('images')) {
-            if (! $keepExisting) {
-                foreach (($blog->images ?? []) as $old) {
-                    if ($old && Storage::disk('public')->exists($old)) {
-                        Storage::disk('public')->delete($old);
-                    }
+        if (! $keepExisting) {
+            foreach (($blog->images ?? []) as $old) {
+                if ($old && Storage::disk('public')->exists($old)) {
+                    Storage::disk('public')->delete($old);
                 }
             }
+            $imagePaths = [];
+        }
+
+        if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 if (count($imagePaths) >= 5) {
                     break;
                 }
                 $imagePaths[] = $image->store('blogs', 'public');
             }
+        }
+
+        if (count($imagePaths) > 5) {
+            return back()->withErrors(['images' => 'You can only have up to 5 images in total.'])->withInput();
         }
 
         $blog->update([
@@ -154,6 +162,20 @@ class BlogController extends Controller
         return redirect()
             ->route('blogs.index')
             ->with('success', 'Blog updated successfully.');
+    }
+
+    protected function ensureStorageSymlink(): void
+    {
+        $link = public_path('storage');
+        $target = storage_path('app/public');
+        if (! is_link($link) && ! file_exists($link)) {
+            try {
+                @mkdir($target, 0775, true);
+                @app('files')->link($target, $link);
+            } catch (\Throwable $e) {
+                
+            }
+        }
     }
 
     /**

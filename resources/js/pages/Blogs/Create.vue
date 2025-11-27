@@ -6,6 +6,7 @@ import Toast from './Toast.vue';
 
 const MAX_TITLE_LENGTH = 255;
 const MAX_CONTENT_LENGTH = 10000;
+const MAX_IMAGE_SIZE_MB = 10;
 
 const breadcrumbs = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -76,7 +77,12 @@ function onFilesChange(e: Event) {
 }
 
 function handleFiles(files: File[]) {
-  const combined = [...form.images, ...files];
+  const filtered = files.filter(f => f.size <= MAX_IMAGE_SIZE_MB * 1024 * 1024);
+  const rejectedCount = files.length - filtered.length;
+  if (rejectedCount > 0) {
+    showToast('error', `Some images exceed ${MAX_IMAGE_SIZE_MB}MB and were skipped.`);
+  }
+  const combined = [...form.images, ...filtered];
   if (combined.length > 5) {
     showToast('error', 'You can upload up to 5 images only.');
     form.images = combined.slice(0, 5);
@@ -117,7 +123,7 @@ const isSubmitting = computed(() => form.processing);
 function filePreview(file: File): string | undefined {
   // Ensure this only runs on client and URL API exists
   if (!isClient.value) return undefined;
-  // @ts-ignore - guard for SSR environments
+  // @ts-expect-error - guard for SSR environments
   const URLRef = typeof URL !== 'undefined' ? URL : undefined;
   if (!URLRef || typeof URLRef.createObjectURL !== 'function') return undefined;
   try {

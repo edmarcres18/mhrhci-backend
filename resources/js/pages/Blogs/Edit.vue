@@ -6,7 +6,6 @@ import Toast from './Toast.vue';
 
 const MAX_TITLE_LENGTH = 255;
 const MAX_CONTENT_LENGTH = 10000;
-const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
 interface Blog {
   id: number;
@@ -89,11 +88,7 @@ function onFilesChange(e: Event) {
 function handleFiles(files: File[]) {
   const existingCount = form.keepExistingImages ? (props.blog.images?.length ?? 0) : 0;
   const allowed = Math.max(0, 5 - existingCount - form.images.length);
-  const valid = files.filter(f => f.size <= MAX_IMAGE_SIZE_BYTES);
-  if (valid.length < files.length) {
-    showToast('error', 'Some images exceed 10MB and were skipped.');
-  }
-  const toAdd = valid.slice(0, allowed);
+  const toAdd = files.slice(0, allowed);
   if (files.length > allowed) {
     showToast('error', `You can only add ${allowed} more image(s). Maximum 5 images total.`);
   }

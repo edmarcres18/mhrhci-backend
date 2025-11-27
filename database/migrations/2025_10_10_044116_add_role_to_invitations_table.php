@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('invitations') && !Schema::hasColumn('invitations', 'role')) {
-            Schema::table('invitations', function (Blueprint $table) {
-                $table->string('role')->default('staff')->after('email');
-            });
-        }
+        Schema::table('invitations', function (Blueprint $table) {
+            $table->string('role')->default('staff')->after('email');
+        });
     }
 
     /**
@@ -23,10 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('invitations') && Schema::hasColumn('invitations', 'role')) {
-            Schema::table('invitations', function (Blueprint $table) {
-                $table->dropColumn('role');
-            });
-        }
+        Schema::table('invitations', function (Blueprint $table) {
+            $table->dropColumn('role');
+        });
     }
 };

@@ -72,7 +72,7 @@ class BlogController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
             'images' => ['nullable', 'array', 'max:5'],
-            'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
+            'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:10240'],
         ]);
 
         $imagePaths = [];
@@ -122,7 +122,7 @@ class BlogController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
             'images' => ['nullable', 'array', 'max:5'],
-            'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:5120'],
+            'images.*' => ['file', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:10240'],
             'keepExistingImages' => ['nullable', 'boolean'],
         ]);
 

@@ -6,6 +6,7 @@ import Toast from './Toast.vue';
 
 const MAX_TITLE_LENGTH = 255;
 const MAX_CONTENT_LENGTH = 10000;
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
 const breadcrumbs = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -76,7 +77,11 @@ function onFilesChange(e: Event) {
 }
 
 function handleFiles(files: File[]) {
-  const combined = [...form.images, ...files];
+  const valid = files.filter(f => f.size <= MAX_IMAGE_SIZE_BYTES);
+  if (valid.length < files.length) {
+    showToast('error', 'Some images exceed 10MB and were skipped.');
+  }
+  const combined = [...form.images, ...valid];
   if (combined.length > 5) {
     showToast('error', 'You can upload up to 5 images only.');
     form.images = combined.slice(0, 5);

@@ -308,14 +308,23 @@ class DatabaseBackupController extends Controller
         $database = $config['database'];
         $username = $config['username'];
         $password = $config['password'] ?? '';
+        $tables = DB::select('SHOW TABLES');
+        $tableNames = [];
+        foreach ($tables as $table) {
+            $tableNames[] = array_values((array) $table)[0];
+        }
+        $preferredOrder = ['users'];
+        $orderedTables = array_values(array_unique(array_merge($preferredOrder, array_diff($tableNames, $preferredOrder))));
+        $tablesList = implode(' ', array_map('escapeshellarg', $orderedTables));
 
         $command = sprintf(
-            'mysqldump --host=%s --port=%d --user=%s --password=%s --single-transaction --quick --add-drop-table --default-character-set=utf8mb4 --set-gtid-purged=OFF --routines --events --triggers --hex-blob --column-statistics=0 --no-tablespaces --order-by-primary %s > %s',
+            'mysqldump --host=%s --port=%d --user=%s --password=%s --single-transaction --quick --add-drop-table --default-character-set=utf8mb4 --set-gtid-purged=OFF --routines --events --triggers --hex-blob --column-statistics=0 --no-tablespaces --order-by-primary %s %s > %s',
             escapeshellarg($host),
             $port,
             escapeshellarg($username),
             escapeshellarg($password),
             escapeshellarg($database),
+            $tablesList,
             escapeshellarg($backupPath)
         );
 
@@ -329,6 +338,10 @@ class DatabaseBackupController extends Controller
 
         try {
             $process->mustRun();
+            $content = File::get($backupPath);
+            $header = "-- MHRHCI MySQL Backup\n-- Generated: ".date('Y-m-d H:i:s')."\nSET NAMES utf8mb4;\n/*!40014 SET FOREIGN_KEY_CHECKS=0 */;\n\n";
+            $footer = "\n/*!40014 SET FOREIGN_KEY_CHECKS=1 */;\n";
+            File::put($backupPath, $header.$content.$footer);
         } catch (ProcessFailedException $e) {
             // If mysqldump is not available, fallback to PHP-based backup
             $this->backupMysqlPHP($database, $backupPath);
@@ -341,13 +354,18 @@ class DatabaseBackupController extends Controller
     private function backupMysqlPHP(string $database, string $backupPath): void
     {
         $tables = DB::select('SHOW TABLES');
+        $tableNames = [];
+        foreach ($tables as $table) {
+            $tableNames[] = array_values((array) $table)[0];
+        }
+        $preferredOrder = ['users'];
+        $orderedTables = array_values(array_unique(array_merge($preferredOrder, array_diff($tableNames, $preferredOrder))));
         $dump = "-- MySQL Database Backup\n";
         $dump .= '-- Generated: '.date('Y-m-d H:i:s')."\n\n";
         $dump .= "SET NAMES utf8mb4;\n";
         $dump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
-        foreach ($tables as $table) {
-            $tableName = array_values((array) $table)[0];
+        foreach ($orderedTables as $tableName) {
 
             // Get create table statement
             $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`");

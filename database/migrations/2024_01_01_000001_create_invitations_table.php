@@ -14,9 +14,9 @@ return new class extends Migration
         if (!Schema::hasTable('invitations')) {
             Schema::create('invitations', function (Blueprint $table) {
                 $table->id();
-                $table->string('email')->unique();
+                $table->string('email', 191)->unique();
                 $table->string('role')->default('staff');
-                $table->string('token')->unique();
+                $table->string('token', 191)->unique();
                 $table->foreignId('invited_by')->constrained('users')->onDelete('cascade');
                 $table->boolean('used')->default(false);
                 $table->timestamp('expires_at');

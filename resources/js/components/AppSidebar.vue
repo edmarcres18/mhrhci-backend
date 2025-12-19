@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavGroup } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Package, FileText, Users, Info, Database, Settings, ClipboardList, Image } from 'lucide-vue-next';
+import { LayoutGrid, Package, FileText, Users, Info, Database, Settings, ClipboardList, Image, Building2 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -39,6 +39,11 @@ const mainNavGroups = computed<NavGroup[]>(() => {
                     title: 'Products',
                     href: '/products',
                     icon: Package,
+                },
+                {
+                    title: 'Principals',
+                    href: '/principals',
+                    icon: Building2,
                 },
                 {
                     title: 'Blogs',

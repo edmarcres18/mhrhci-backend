@@ -23,6 +23,12 @@ interface Product {
   features?: string[] | null;
   is_featured?: boolean;
   created_at?: string | null;
+  principal?: {
+    id: number;
+    name: string;
+    logo?: string | null;
+    description?: string | null;
+  } | null;
 }
 
 interface ProductType {
@@ -85,6 +91,10 @@ const breadcrumbs = [
 function imageUrl(path?: string) {
   if (!path) return undefined;
   return `/storage/${path}`;
+}
+
+function principalLogo(p?: Product['principal']) {
+  return p?.logo || undefined;
 }
 
 // Delete confirmation modal state
@@ -262,7 +272,13 @@ watch(
                   <span v-if="p.product_type_label" class="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium" :class="p.product_type === 'medical_equipment' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">{{ p.product_type_label }}</span>
                   <span v-if="p.is_featured" class="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Featured</span>
                 </div>
-                <div class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{{ new Date(p.created_at || '').toLocaleDateString() }}</div>
+                <div class="mt-1 flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                  <span>{{ new Date(p.created_at || '').toLocaleDateString() }}</span>
+                  <span v-if="p.principal" class="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                    <img v-if="principalLogo(p.principal)" :src="principalLogo(p.principal)" alt="Principal Logo" class="h-4 w-4 rounded-full object-cover" />
+                    <span>{{ p.principal.name }}</span>
+                  </span>
+                </div>
               </div>
             </div>
             <div class="mt-3 flex items-center justify-end gap-3 text-sm">
@@ -291,6 +307,7 @@ watch(
                 <tr>
                   <th class="px-4 py-3 font-medium">Name</th>
                   <th class="px-4 py-3 font-medium">Type</th>
+                  <th class="px-4 py-3 font-medium">Principal</th>
                   <th class="px-4 py-3 font-medium">Created</th>
                   <th class="px-4 py-3 text-right font-medium">Actions</th>
                 </tr>
@@ -312,6 +329,13 @@ watch(
                   </td>
                   <td class="px-4 py-3">
                     <span v-if="p.product_type_label" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium" :class="p.product_type === 'medical_equipment' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">{{ p.product_type_label }}</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span v-if="p.principal" class="inline-flex items-center gap-2 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                      <img v-if="principalLogo(p.principal)" :src="principalLogo(p.principal)" alt="Principal Logo" class="h-5 w-5 rounded-full object-cover" />
+                      <span>{{ p.principal.name }}</span>
+                    </span>
+                    <span v-else class="text-xs text-neutral-400 dark:text-neutral-500">—</span>
                   </td>
                   <td class="px-4 py-3">{{ new Date(p.created_at || '').toLocaleString() }}</td>
                   <td class="px-4 py-3 text-right">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Principal;
 use App\Models\Product;
 use App\ProductType;
 use Illuminate\Http\JsonResponse;
@@ -27,7 +28,7 @@ class ProductController extends Controller
             $perPage = 10;
         }
 
-        $query = Product::query();
+        $query = Product::query()->with('principal');
 
         // Apply search filter
         if ($search !== '') {
@@ -47,6 +48,7 @@ class ProductController extends Controller
             ->paginate($perPage)
             ->withQueryString()
             ->through(function ($product) {
+                $principal = $product->principal;
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -56,6 +58,12 @@ class ProductController extends Controller
                     'images' => $product->images,
                     'features' => $product->features,
                     'is_featured' => (bool) $product->is_featured,
+                    'principal' => $principal ? [
+                        'id' => $principal->id,
+                        'name' => $principal->name,
+                        'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                        'description' => $principal->description,
+                    ] : null,
                     'created_at' => optional($product->created_at)->toDateTimeString(),
                 ];
             });
@@ -71,6 +79,7 @@ class ProductController extends Controller
                 'value' => $type->value,
                 'label' => $type->displayName(),
             ])->toArray(),
+            'principals' => Principal::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -84,6 +93,7 @@ class ProductController extends Controller
                 'value' => $type->value,
                 'label' => $type->displayName(),
             ])->toArray(),
+            'principals' => Principal::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -95,6 +105,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'product_type' => ['required', 'string', Rule::in(ProductType::values())],
+            'principal_id' => ['required', 'integer', 'exists:principals,id'],
             'description' => ['nullable', 'string'],
             'features' => ['nullable', 'array'],
             'features.*' => ['nullable', 'string', 'max:255'],
@@ -113,6 +124,7 @@ class ProductController extends Controller
         $product = Product::create([
             'name' => $validated['name'],
             'product_type' => $validated['product_type'],
+            'principal_id' => $validated['principal_id'],
             'description' => $validated['description'] ?? null,
             'features' => $validated['features'] ?? [],
             'images' => $imagePaths,
@@ -129,6 +141,8 @@ class ProductController extends Controller
      */
     public function show(Product $product): Response
     {
+        $product->load('principal');
+
         return Inertia::render('Products/Show', [
             'product' => $product,
         ]);
@@ -145,6 +159,7 @@ class ProductController extends Controller
                 'value' => $type->value,
                 'label' => $type->displayName(),
             ])->toArray(),
+            'principals' => Principal::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -156,6 +171,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'product_type' => ['required', 'string', Rule::in(ProductType::values())],
+            'principal_id' => ['required', 'integer', 'exists:principals,id'],
             'description' => ['nullable', 'string'],
             'features' => ['nullable', 'array'],
             'features.*' => ['nullable', 'string', 'max:255'],
@@ -187,6 +203,7 @@ class ProductController extends Controller
         $product->update([
             'name' => $validated['name'],
             'product_type' => $validated['product_type'],
+            'principal_id' => $validated['principal_id'],
             'description' => $validated['description'] ?? null,
             'features' => $validated['features'] ?? [],
             'images' => array_values($imagePaths),
@@ -256,7 +273,7 @@ class ProductController extends Controller
 
             // Cache for 5 minutes
             $products = Cache::remember($cacheKey, 300, function () use ($search, $productType, $perPage, $sortBy, $sortOrder) {
-                $query = Product::query();
+                $query = Product::query()->with('principal');
 
                 // Apply search filter
                 if (! empty($search)) {
@@ -279,6 +296,7 @@ class ProductController extends Controller
 
             // Transform data to include full image URLs
             $transformedProducts = $products->through(function ($product) {
+                $principal = $product->principal;
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -288,6 +306,12 @@ class ProductController extends Controller
                     'excerpt' => $this->generateExcerpt($product->description, 150),
                     'images' => $this->formatImageUrls($product->images),
                     'features' => $product->features ?? [],
+                    'principal' => $principal ? [
+                        'id' => $principal->id,
+                        'name' => $principal->name,
+                        'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                        'description' => $principal->description,
+                    ] : null,
                     'created_at' => $product->created_at?->toIso8601String(),
                     'updated_at' => $product->updated_at?->toIso8601String(),
                 ];
@@ -349,6 +373,7 @@ class ProductController extends Controller
             // Cache for 10 minutes
             $products = Cache::remember($cacheKey, 600, function () use ($limit) {
                 return Product::query()
+                    ->with('principal')
                     ->latest('created_at')
                     ->limit($limit)
                     ->get();
@@ -356,6 +381,7 @@ class ProductController extends Controller
 
             // Transform data
             $transformedProducts = $products->map(function ($product) {
+                $principal = $product->principal;
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -365,6 +391,12 @@ class ProductController extends Controller
                     'excerpt' => $this->generateExcerpt($product->description, 150),
                     'images' => $this->formatImageUrls($product->images),
                     'features' => $product->features ?? [],
+                    'principal' => $principal ? [
+                        'id' => $principal->id,
+                        'name' => $principal->name,
+                        'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                        'description' => $principal->description,
+                    ] : null,
                     'created_at' => $product->created_at?->toIso8601String(),
                     'updated_at' => $product->updated_at?->toIso8601String(),
                 ];
@@ -410,6 +442,7 @@ class ProductController extends Controller
 
             $products = Cache::remember($cacheKey, 600, function () use ($limit) {
                 return Product::query()
+                    ->with('principal')
                     ->where('is_featured', true)
                     ->latest('created_at')
                     ->limit($limit)
@@ -417,6 +450,7 @@ class ProductController extends Controller
             });
 
             $transformedProducts = $products->map(function ($product) {
+                $principal = $product->principal;
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -427,6 +461,12 @@ class ProductController extends Controller
                     'images' => $this->formatImageUrls($product->images),
                     'features' => $product->features ?? [],
                     'is_featured' => (bool) $product->is_featured,
+                    'principal' => $principal ? [
+                        'id' => $principal->id,
+                        'name' => $principal->name,
+                        'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                        'description' => $principal->description,
+                    ] : null,
                     'created_at' => $product->created_at?->toIso8601String(),
                     'updated_at' => $product->updated_at?->toIso8601String(),
                 ];

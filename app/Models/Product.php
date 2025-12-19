@@ -23,6 +23,7 @@ class Product extends Model
         'images',
         'features',
         'is_featured',
+        'principal_id',
     ];
 
     /**
@@ -64,11 +65,20 @@ class Product extends Model
         // Clear latest products cache for different limits
         for ($i = 1; $i <= 50; $i++) {
             Cache::forget("products_latest_{$i}");
+            Cache::forget("products_featured_{$i}");
         }
 
         // Clear paginated products cache (pattern matching)
         // Note: This clears common cache keys. For production with Redis,
         // consider using cache tags for more efficient cache invalidation.
         Cache::flush(); // Use with caution in production - better to use tags
+    }
+
+    /**
+     * Relation: product belongs to a principal.
+     */
+    public function principal()
+    {
+        return $this->belongsTo(Principal::class);
     }
 }

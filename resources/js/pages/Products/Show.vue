@@ -20,6 +20,12 @@ interface Product {
   features?: string[] | null;
   is_featured?: boolean | null;
   created_at?: string | null;
+  principal?: {
+    id: number;
+    name: string;
+    logo?: string | null;
+    description?: string | null;
+  } | null;
 }
 
 const props = defineProps<{ product: Product }>();
@@ -35,6 +41,10 @@ const breadcrumbs = [
 function imageUrl(path?: string) {
   if (!path) return undefined;
   return `/storage/${path}`;
+}
+
+function principalLogo(p?: Product['principal']) {
+  return p?.logo || undefined;
 }
 
 // Image gallery state
@@ -155,9 +165,13 @@ watch(
       <!-- Header -->
       <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="flex-1">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-2xl font-bold text-neutral-900 dark:text-white sm:text-3xl">{{ props.product.name }}</h1>
             <span v-if="props.product.is_featured" class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Featured</span>
+            <span v-if="props.product.principal" class="inline-flex items-center gap-2 rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
+              <img v-if="principalLogo(props.product.principal)" :src="principalLogo(props.product.principal)" alt="Principal Logo" class="h-5 w-5 rounded-full object-cover" />
+              <span>{{ props.product.principal?.name }}</span>
+            </span>
           </div>
           <p class="mt-2 flex items-center gap-1 text-sm text-neutral-500 dark:text-neutral-400">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

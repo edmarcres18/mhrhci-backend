@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
@@ -23,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::resource('blogs', BlogController::class);
     Route::resource('users', UserController::class);
+    Route::resource('principals', PrincipalController::class);
 
     // User invitation routes
     Route::get('users-invite', [UserController::class, 'inviteForm'])->name('users.invite.form');

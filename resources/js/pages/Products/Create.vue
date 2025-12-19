@@ -12,8 +12,14 @@ interface ProductType {
   label: string;
 }
 
+interface PrincipalOption {
+  id: number;
+  name: string;
+}
+
 const props = defineProps<{
   productTypes: ProductType[];
+  principals: PrincipalOption[];
 }>();
 
 const breadcrumbs = [
@@ -25,6 +31,7 @@ const breadcrumbs = [
 const form = useForm({
   name: '',
   product_type: props.productTypes[0]?.value || 'medical_supplies',
+  principal_id: props.principals[0]?.id ?? null,
   description: '',
   features: [] as string[],
   images: [] as File[],
@@ -156,10 +163,15 @@ function submit() {
     showToast('error', 'Product name is required.');
     return;
   }
+  if (!form.principal_id) {
+    showToast('error', 'Principal is required.');
+    return;
+  }
   
   const payload: Record<string, any> = {
     name: form.name,
     product_type: form.product_type,
+    principal_id: form.principal_id,
     description: form.description,
     features: form.features,
     is_featured: form.is_featured,
@@ -254,6 +266,36 @@ const remainingDescChars = computed(() => MAX_DESCRIPTION_LENGTH - form.descript
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
             <span>{{ form.errors.product_type }}</span>
+          </div>
+        </div>
+
+        <!-- Principal -->
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+            Principal <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <select 
+              v-model="form.principal_id"
+              class="w-full appearance-none rounded-lg border border-neutral-300 bg-white px-4 py-3 pr-10 text-sm outline-none transition-all focus:border-black focus:ring-2 focus:ring-black/10 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
+              :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/10': form.errors.principal_id }"
+            >
+              <option disabled value="">Select principal</option>
+              <option v-for="p in principals" :key="p.id" :value="p.id">
+                {{ p.name }}
+              </option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500 dark:text-neutral-400">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          <div v-if="form.errors.principal_id" class="flex items-center gap-1 text-sm text-red-600">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ form.errors.principal_id }}</span>
           </div>
         </div>
 

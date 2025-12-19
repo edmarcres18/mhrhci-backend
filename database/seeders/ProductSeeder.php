@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Product;
+use App\Models\Principal;
 use App\ProductType;
 use Illuminate\Database\Seeder;
 
@@ -13,6 +14,18 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
+        $principalIds = Principal::pluck('id')->toArray();
+        if (count($principalIds) === 0) {
+            $principalIds = [Principal::create([
+                'name' => 'Default Principal',
+                'description' => 'Default principal for seeded products.',
+            ])->id];
+        }
+
+        $principalFor = function (int $index) use ($principalIds) {
+            return $principalIds[$index % count($principalIds)];
+        };
+
         $products = [
             // Medical Supplies
             [
@@ -307,7 +320,8 @@ class ProductSeeder extends Seeder
             ],
         ];
 
-        foreach ($products as $product) {
+        foreach ($products as $index => $product) {
+            $product['principal_id'] = $principalFor($index);
             Product::create($product);
         }
     }

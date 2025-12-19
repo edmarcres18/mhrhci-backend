@@ -14,14 +14,17 @@ const props = defineProps<Props>();
 const activities = computed(() => {
     if (!props.data) return [];
     
-    // Combine all activities and take top 5
+    // Combine all activities, sort by timestamp desc, and take top 5
     const allActivities = [
         ...props.data.users,
         ...props.data.blogs,
         ...props.data.products,
+        ...props.data.principals,
     ];
     
-    return allActivities.slice(0, 5);
+    return allActivities
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        .slice(0, 5);
 });
 
 const getInitials = (name: string) => {
@@ -40,6 +43,8 @@ const getBadgeVariant = (type: string) => {
             return 'secondary';
         case 'product':
             return 'outline';
+        case 'principal':
+            return 'default';
         default:
             return 'default';
     }
@@ -49,7 +54,14 @@ const getDisplayName = (item: any) => {
     if (item.type === 'user') return item.name;
     if (item.type === 'blog') return item.title;
     if (item.type === 'product') return item.name;
+    if (item.type === 'principal') return item.name;
     return 'Unknown';
+};
+
+const getSubtitle = (item: any) => {
+    if (item.type === 'user') return item.email;
+    if (item.type === 'principal') return item.action ? `Principal ${item.action}` : 'Principal';
+    return null;
 };
 </script>
 
@@ -92,8 +104,8 @@ const getDisplayName = (item: any) => {
                         <Badge :variant="getBadgeVariant(item.type)" class="text-xs">
                             {{ item.type }}
                         </Badge>
-                        <p class="text-xs text-muted-foreground" v-if="item.type === 'user'">
-                            {{ item.email }}
+                        <p class="text-xs text-muted-foreground" v-if="getSubtitle(item)">
+                            {{ getSubtitle(item) }}
                         </p>
                     </div>
                 </div>

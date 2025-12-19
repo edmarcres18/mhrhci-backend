@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Blog;
+use App\Models\Principal;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,7 @@ class DashboardController extends Controller
                 return [
                     'users' => $this->getUserStats(),
                     'blogs' => $this->getBlogStats(),
+                    'principals' => $this->getPrincipalStats(),
                     'products' => $this->getProductStats(),
                     'activity' => $this->getActivityStats(),
                 ];
@@ -103,6 +105,7 @@ class DashboardController extends Controller
                             'email' => $user->email,
                             'avatar' => $this->getAvatarUrl($user->email),
                             'created_at' => $user->created_at->diffForHumans(),
+                            'timestamp' => $user->created_at->timestamp,
                             'type' => 'user',
                         ];
                     });
@@ -115,6 +118,7 @@ class DashboardController extends Controller
                             'id' => $blog->id,
                             'title' => $blog->title,
                             'created_at' => $blog->created_at->diffForHumans(),
+                            'timestamp' => $blog->created_at->timestamp,
                             'type' => 'blog',
                         ];
                     });
@@ -127,7 +131,30 @@ class DashboardController extends Controller
                             'id' => $product->id,
                             'name' => $product->name,
                             'created_at' => $product->created_at->diffForHumans(),
+                            'timestamp' => $product->created_at->timestamp,
                             'type' => 'product',
+                        ];
+                    });
+
+                $recentPrincipals = Principal::withTrashed()
+                    ->orderByDesc('updated_at')
+                    ->take(5)
+                    ->get(['id', 'name', 'created_at', 'updated_at', 'deleted_at'])
+                    ->map(function ($principal) {
+                        $action = $principal->deleted_at
+                            ? 'deleted'
+                            : ($principal->updated_at->gt($principal->created_at) ? 'updated' : 'created');
+                        $timestamp = $principal->deleted_at
+                            ? $principal->deleted_at
+                            : ($action === 'created' ? $principal->created_at : $principal->updated_at);
+
+                        return [
+                            'id' => $principal->id,
+                            'name' => $principal->name,
+                            'created_at' => $timestamp->diffForHumans(),
+                            'type' => 'principal',
+                            'action' => $action,
+                            'timestamp' => $timestamp->timestamp,
                         ];
                     });
 
@@ -135,6 +162,7 @@ class DashboardController extends Controller
                     'users' => $recentUsers,
                     'blogs' => $recentBlogs,
                     'products' => $recentProducts,
+                    'principals' => $recentPrincipals,
                 ];
             });
 
@@ -259,6 +287,33 @@ class DashboardController extends Controller
     }
 
     /**
+     * Get principal statistics.
+     */
+    private function getPrincipalStats(): array
+    {
+        $total = Principal::count();
+        $lastMonth = Principal::where('created_at', '>=', now()->subMonth())->count();
+        $lastWeek = Principal::where('created_at', '>=', now()->subWeek())->count();
+
+        $twoMonthsAgo = Principal::whereBetween('created_at', [
+            now()->subMonths(2),
+            now()->subMonth(),
+        ])->count();
+
+        $percentageChange = $twoMonthsAgo > 0
+            ? round((($lastMonth - $twoMonthsAgo) / $twoMonthsAgo) * 100, 1)
+            : ($lastMonth > 0 ? 100 : 0);
+
+        return [
+            'total' => $total,
+            'last_month' => $lastMonth,
+            'last_week' => $lastWeek,
+            'percentage_change' => $percentageChange,
+            'trend' => $percentageChange >= 0 ? 'up' : 'down',
+        ];
+    }
+
+    /**
      * Get activity statistics (combined recent activity).
      */
     private function getActivityStats(): array
@@ -269,21 +324,24 @@ class DashboardController extends Controller
         $usersLastHour = User::where('created_at', '>=', $lastHour)->count();
         $blogsLastHour = Blog::where('created_at', '>=', $lastHour)->count();
         $productsLastHour = Product::where('created_at', '>=', $lastHour)->count();
+        $principalsLastHour = Principal::where('created_at', '>=', $lastHour)->count();
 
-        $totalActivity = $usersLastHour + $blogsLastHour + $productsLastHour;
+        $totalActivity = $usersLastHour + $blogsLastHour + $productsLastHour + $principalsLastHour;
 
         // Calculate activity from previous hour for comparison
         $twoHoursAgo = $now->copy()->subHours(2);
         $previousHourActivity =
             User::whereBetween('created_at', [$twoHoursAgo, $lastHour])->count() +
             Blog::whereBetween('created_at', [$twoHoursAgo, $lastHour])->count() +
-            Product::whereBetween('created_at', [$twoHoursAgo, $lastHour])->count();
+            Product::whereBetween('created_at', [$twoHoursAgo, $lastHour])->count() +
+            Principal::whereBetween('created_at', [$twoHoursAgo, $lastHour])->count();
 
         return [
             'total' => $totalActivity,
             'users' => $usersLastHour,
             'blogs' => $blogsLastHour,
             'products' => $productsLastHour,
+            'principals' => $principalsLastHour,
             'previous_hour' => $previousHourActivity,
             'change' => $totalActivity - $previousHourActivity,
         ];

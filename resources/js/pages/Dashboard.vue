@@ -9,7 +9,7 @@ import StatCard from '@/components/dashboard/StatCard.vue';
 import OverviewChart from '@/components/dashboard/OverviewChart.vue';
 import RecentSales from '@/components/dashboard/RecentSales.vue';
 import LatestBackup from '@/components/dashboard/LatestBackup.vue';
-import { Activity, FileText, Package, RefreshCw, Users } from 'lucide-vue-next';
+import { Activity, FileText, Package, RefreshCw, Users, Building2 } from 'lucide-vue-next';
 import { useDashboard } from '@/composables/useDashboard';
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
@@ -114,6 +114,14 @@ const handleRefresh = async () => {
                     :trend="stats?.products.trend"
                     :loading="isLoadingStats"
                     :icon="Package"
+                />
+                <StatCard
+                    title="Principals"
+                    :value="stats?.principals.total ?? 0"
+                    :change="`${stats?.principals.percentage_change ?? 0}% from last month`"
+                    :trend="stats?.principals.trend"
+                    :loading="isLoadingStats"
+                    :icon="Building2"
                 />
                 <StatCard
                     title="Active Now"

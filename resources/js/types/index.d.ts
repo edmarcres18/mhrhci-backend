@@ -48,6 +48,7 @@ export type BreadcrumbItemType = BreadcrumbItem;
 export interface DashboardStats {
     users: EntityStats;
     blogs: EntityStats;
+    principals: EntityStats;
     products: EntityStats;
     activity: ActivityStats;
 }
@@ -65,6 +66,7 @@ export interface ActivityStats {
     users: number;
     blogs: number;
     products: number;
+    principals: number;
     previous_hour: number;
     change: number;
 }
@@ -83,6 +85,7 @@ export interface RecentActivity {
     users: RecentUser[];
     blogs: RecentBlog[];
     products: RecentProduct[];
+    principals: RecentPrincipal[];
 }
 
 export interface RecentUser {
@@ -91,6 +94,7 @@ export interface RecentUser {
     email: string;
     avatar: string;
     created_at: string;
+    timestamp: number;
     type: 'user';
 }
 
@@ -98,6 +102,7 @@ export interface RecentBlog {
     id: number;
     title: string;
     created_at: string;
+    timestamp: number;
     type: 'blog';
 }
 
@@ -105,10 +110,20 @@ export interface RecentProduct {
     id: number;
     name: string;
     created_at: string;
+    timestamp: number;
     type: 'product';
 }
 
-export type RecentItem = RecentUser | RecentBlog | RecentProduct;
+export interface RecentPrincipal {
+    id: number;
+    name: string;
+    created_at: string;
+    timestamp: number;
+    type: 'principal';
+    action: 'created' | 'updated' | 'deleted';
+}
+
+export type RecentItem = RecentUser | RecentBlog | RecentProduct | RecentPrincipal;
 
 export interface LatestBackup {
     filename: string;

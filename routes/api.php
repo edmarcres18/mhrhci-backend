@@ -4,6 +4,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CustomerRegistrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HeroBackgroundController;
+use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
@@ -110,6 +111,10 @@ Route::prefix('v1')->group(function () {
         ->name('api.v1.hero-backgrounds.index');
     Route::get('/hero-backgrounds/frontend', [HeroBackgroundController::class, 'frontend'])
         ->name('api.v1.hero-backgrounds.frontend');
+
+    // Principal API Endpoints
+    Route::get('/principals', [PrincipalController::class, 'apiIndex'])
+        ->name('api.principals.index');
 });
 
 // Site Settings API (Public) - For logo and name display

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Principal;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -120,6 +122,67 @@ class PrincipalController extends Controller
                 'updated_at' => optional($principal->updated_at)->toDateTimeString(),
             ],
         ]);
+    }
+
+    /**
+     * API: Get all principals with name, description, and logo URL (cached).
+     */
+    public function apiIndex(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'sortBy' => ['nullable', 'string', 'in:name,created_at,updated_at'],
+                'sortOrder' => ['nullable', 'string', 'in:asc,desc'],
+            ]);
+
+            $sortBy = $validated['sortBy'] ?? 'name';
+            $sortOrder = $validated['sortOrder'] ?? 'asc';
+
+            $cacheKey = 'principals_api_'.md5(json_encode([
+                'sortBy' => $sortBy,
+                'sortOrder' => $sortOrder,
+            ]));
+
+            $principals = Cache::remember($cacheKey, 300, function () use ($sortBy, $sortOrder) {
+                return Principal::query()
+                    ->orderBy($sortBy, $sortOrder)
+                    ->get();
+            });
+
+            $transformed = $principals->map(function (Principal $principal) {
+                return [
+                    'id' => $principal->id,
+                    'name' => $principal->name,
+                    'description' => $principal->description,
+                    'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                    'created_at' => $principal->created_at?->toIso8601String(),
+                    'updated_at' => $principal->updated_at?->toIso8601String(),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $transformed,
+                'meta' => [
+                    'count' => $transformed->count(),
+                ],
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('API Principal Index Error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching principals',
+            ], 500);
+        }
     }
 
     /**

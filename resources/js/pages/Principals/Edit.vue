@@ -11,6 +11,7 @@ interface Principal {
   description?: string | null;
   logo?: string | null;
   logo_url?: string | null;
+  is_featured?: boolean;
 }
 
 const props = defineProps<{ principal: Principal }>();
@@ -26,6 +27,7 @@ const form = useForm({
   description: props.principal.description ?? '',
   logo: null as File | null,
   remove_logo: false as boolean,
+  is_featured: Boolean(props.principal.is_featured),
 });
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
@@ -104,6 +106,7 @@ function submit() {
       if (data.description) fd.append('description', data.description);
       if (data.logo) fd.append('logo', data.logo);
       fd.append('remove_logo', data.remove_logo ? '1' : '0');
+      fd.append('is_featured', data.is_featured ? '1' : '0');
       return fd;
     })
     .post(`/principals/${props.principal.id}`, {
@@ -168,6 +171,19 @@ function submit() {
             :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/10': form.errors.description }"
           ></textarea>
           <div v-if="form.errors.description" class="text-sm text-red-600">{{ form.errors.description }}</div>
+        </div>
+
+        <!-- Featured -->
+        <div class="flex items-center gap-3">
+          <input
+            id="is_featured"
+            v-model="form.is_featured"
+            type="checkbox"
+            class="h-4 w-4 rounded border-neutral-300 text-black focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:focus:ring-white"
+          />
+          <label for="is_featured" class="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+            Mark as featured
+          </label>
         </div>
 
         <!-- Logo -->

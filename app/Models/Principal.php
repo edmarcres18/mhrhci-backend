@@ -21,6 +21,16 @@ class Principal extends Model
         'name',
         'logo',
         'description',
+        'is_featured',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'is_featured' => 'boolean',
     ];
 
     /**
@@ -39,6 +49,22 @@ class Principal extends Model
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    /**
+     * Determine if the principal is featured.
+     */
+    public function isFeatured(): bool
+    {
+        return (bool) $this->is_featured;
+    }
+
+    /**
+     * Scope for featured principals.
+     */
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true);
     }
 
     /**

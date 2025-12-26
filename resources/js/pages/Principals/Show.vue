@@ -11,6 +11,7 @@ interface Principal {
   logo_url?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  is_featured?: boolean;
 }
 
 const props = defineProps<{ principal: Principal }>();
@@ -33,6 +34,9 @@ const hasDescription = computed(() => !!props.principal.description);
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">{{ props.principal.name }}</h1>
           <p class="text-sm text-neutral-500 dark:text-neutral-400">
             Created {{ props.principal.created_at || '—' }} • Updated {{ props.principal.updated_at || '—' }}
+          </p>
+          <p class="mt-1 text-xs font-semibold" :class="props.principal.is_featured ? 'text-green-600' : 'text-neutral-400'">
+            {{ props.principal.is_featured ? 'Featured' : 'Not featured' }}
           </p>
         </div>
         <div class="flex items-center gap-2">

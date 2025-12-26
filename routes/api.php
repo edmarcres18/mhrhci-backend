@@ -115,6 +115,11 @@ Route::prefix('v1')->group(function () {
     // Principal API Endpoints
     Route::get('/principals', [PrincipalController::class, 'apiIndex'])
         ->name('api.principals.index');
+    Route::get('/principals/featured', [PrincipalController::class, 'apiFeatured'])
+        ->name('api.principals.featured');
+    Route::get('/principals/{id}/products', [PrincipalController::class, 'apiProducts'])
+        ->where('id', '[0-9]+')
+        ->name('api.principals.products');
 });
 
 // Site Settings API (Public) - For logo and name display

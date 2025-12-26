@@ -17,6 +17,7 @@ type Principal = {
   name: string;
   description?: string | null;
   logo?: string | null;
+  is_featured?: boolean;
   created_at?: string | null;
 };
 
@@ -191,6 +192,7 @@ function formatDate(value?: string | null) {
                 <th class="px-4 py-3 font-medium">Name</th>
                 <th class="px-4 py-3 font-medium">Description</th>
                 <th class="px-4 py-3 font-medium">Logo</th>
+                <th class="px-4 py-3 font-medium">Featured</th>
                 <th class="px-4 py-3 font-medium">Created</th>
                 <th class="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
@@ -209,6 +211,13 @@ function formatDate(value?: string | null) {
                 <td class="px-4 py-3">
                   <span v-if="p.logo" class="text-xs text-neutral-500">Yes</span>
                   <span v-else class="text-xs text-neutral-400">None</span>
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    :class="p.is_featured ? 'text-xs font-semibold text-green-600' : 'text-xs text-neutral-400'"
+                  >
+                    {{ p.is_featured ? 'Yes' : 'No' }}
+                  </span>
                 </td>
                 <td class="px-4 py-3 text-neutral-600 dark:text-neutral-300">
                   {{ formatDate(p.created_at) }}

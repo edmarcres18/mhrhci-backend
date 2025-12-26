@@ -15,6 +15,7 @@ const form = useForm({
   name: '',
   description: '',
   logo: null as File | null,
+  is_featured: false as boolean,
 });
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
@@ -86,11 +87,12 @@ function submit() {
   data.append('name', form.name);
   if (form.description) data.append('description', form.description);
   if (form.logo) data.append('logo', form.logo);
+  data.append('is_featured', form.is_featured ? '1' : '0');
 
   form.post('/principals', {
     forceFormData: true,
     onSuccess: () => {
-      form.reset('name', 'description', 'logo');
+      form.reset('name', 'description', 'logo', 'is_featured');
       if (fileInputRef.value) fileInputRef.value.value = '';
       showToast('success', 'Principal created successfully.');
     },
@@ -151,6 +153,19 @@ function submit() {
             :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/10': form.errors.description }"
           ></textarea>
           <div v-if="form.errors.description" class="text-sm text-red-600">{{ form.errors.description }}</div>
+        </div>
+
+        <!-- Featured -->
+        <div class="flex items-center gap-3">
+          <input
+            id="is_featured"
+            v-model="form.is_featured"
+            type="checkbox"
+            class="h-4 w-4 rounded border-neutral-300 text-black focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:focus:ring-white"
+          />
+          <label for="is_featured" class="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+            Mark as featured
+          </label>
         </div>
 
         <!-- Logo -->

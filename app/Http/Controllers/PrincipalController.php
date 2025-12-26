@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Principal;
+use App\Models\Product;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -42,6 +44,7 @@ class PrincipalController extends Controller
                     'name' => $principal->name,
                     'description' => $principal->description,
                     'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                    'is_featured' => (bool) $principal->is_featured,
                     'created_at' => optional($principal->created_at)->toDateTimeString(),
                 ];
             });
@@ -72,11 +75,13 @@ class PrincipalController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:2048'],
+            'is_featured' => ['nullable', 'boolean'],
         ]);
 
         $data = [
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'is_featured' => (bool) ($validated['is_featured'] ?? false),
         ];
 
         if ($request->hasFile('logo')) {
@@ -102,6 +107,7 @@ class PrincipalController extends Controller
                 'description' => $principal->description,
                 'logo' => $principal->logo,
                 'logo_url' => $principal->logo ? Storage::url($principal->logo) : null,
+                'is_featured' => (bool) $principal->is_featured,
             ],
         ]);
     }
@@ -118,6 +124,7 @@ class PrincipalController extends Controller
                 'description' => $principal->description,
                 'logo' => $principal->logo,
                 'logo_url' => $principal->logo ? Storage::url($principal->logo) : null,
+                'is_featured' => (bool) $principal->is_featured,
                 'created_at' => optional($principal->created_at)->toDateTimeString(),
                 'updated_at' => optional($principal->updated_at)->toDateTimeString(),
             ],
@@ -155,6 +162,7 @@ class PrincipalController extends Controller
                     'name' => $principal->name,
                     'description' => $principal->description,
                     'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                    'is_featured' => (bool) $principal->is_featured,
                     'created_at' => $principal->created_at?->toIso8601String(),
                     'updated_at' => $principal->updated_at?->toIso8601String(),
                 ];
@@ -186,6 +194,122 @@ class PrincipalController extends Controller
     }
 
     /**
+     * API: Get featured principals only.
+     */
+    public function apiFeatured(): JsonResponse
+    {
+        try {
+            $cacheKey = 'principals_featured_api_v1';
+
+            $principals = Cache::remember($cacheKey, 300, function () {
+                return Principal::query()
+                    ->where('is_featured', true)
+                    ->orderBy('name')
+                    ->get();
+            });
+
+            $transformed = $principals->map(function (Principal $principal) {
+                return [
+                    'id' => $principal->id,
+                    'name' => $principal->name,
+                    'description' => $principal->description,
+                    'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                    'is_featured' => (bool) $principal->is_featured,
+                    'created_at' => $principal->created_at?->toIso8601String(),
+                    'updated_at' => $principal->updated_at?->toIso8601String(),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $transformed,
+                'meta' => [
+                    'count' => $transformed->count(),
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error('API Principal Featured Error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching featured principals',
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get all products that belong to a specific principal.
+     */
+    public function apiProducts(Request $request, int $id): JsonResponse
+    {
+        try {
+            $principal = Principal::findOrFail($id);
+
+            $cacheKey = "principal_{$id}_products";
+            $products = Cache::remember($cacheKey, 300, function () use ($id) {
+                return Product::query()
+                    ->where('principal_id', $id)
+                    ->orderBy('name')
+                    ->get();
+            });
+
+            $transformedProducts = $products->map(function (Product $product) {
+                $images = collect($product->images ?? [])
+                    ->filter()
+                    ->map(fn ($path) => Storage::url($path))
+                    ->values()
+                    ->all();
+
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'product_type' => $product->product_type?->value,
+                    'product_type_label' => $product->product_type?->displayName(),
+                    'description' => $product->description,
+                    'images' => $images,
+                    'features' => $product->features ?? [],
+                    'is_featured' => (bool) $product->is_featured,
+                    'principal_id' => $product->principal_id,
+                    'created_at' => $product->created_at?->toIso8601String(),
+                    'updated_at' => $product->updated_at?->toIso8601String(),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'principal' => [
+                    'id' => $principal->id,
+                    'name' => $principal->name,
+                    'description' => $principal->description,
+                    'logo' => $principal->logo ? Storage::url($principal->logo) : null,
+                    'created_at' => $principal->created_at?->toIso8601String(),
+                    'updated_at' => $principal->updated_at?->toIso8601String(),
+                ],
+                'data' => $transformedProducts,
+                'meta' => [
+                    'count' => $transformedProducts->count(),
+                ],
+            ], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Principal not found',
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('API Principal Products Error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching products for this principal',
+            ], 500);
+        }
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Principal $principal)
@@ -195,11 +319,13 @@ class PrincipalController extends Controller
             'description' => ['nullable', 'string'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:2048'],
             'remove_logo' => ['nullable', 'boolean'],
+            'is_featured' => ['nullable', 'boolean'],
         ]);
 
         $data = [
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'is_featured' => (bool) ($validated['is_featured'] ?? $principal->is_featured),
         ];
 
         $removeLogo = $request->boolean('remove_logo', false);

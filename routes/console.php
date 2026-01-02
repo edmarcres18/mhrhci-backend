@@ -36,8 +36,8 @@ Schedule::command('backup:database --keep-days=30')
         error('Database backup failed at '.now()->toDateTimeString());
     });
 
-// Weekly cleanup on Sundays at 3:00 AM
-Schedule::command('backup:cleanup --days=30')
+// Weekly cleanup on Sundays at 3:00 AM (retains 7 days of backups)
+Schedule::command('backup:cleanup --days=7')
     ->weeklyOn(0, '03:00')
     ->timezone(config('app.timezone'))
     ->onSuccess(function () {

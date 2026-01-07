@@ -12,17 +12,11 @@ return [
     */
     'paths' => ['api/*'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => [
-        'http://127.0.0.1:8000',
-        'http://localhost:8000',
-        'http://192.168.1.210:4000',
-        'http://192.168.1.210:4001',
-        'https://mhrpci.site/',
-        'https://www.mhrpci.site/',
-    ],
+    'allowed_origins' => ['*'],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
     'max_age' => 0,
-    'supports_credentials' => true,
+    // Use wildcard origins, so credentials must be disabled per CORS spec
+    'supports_credentials' => false,
 ];

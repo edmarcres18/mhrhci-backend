@@ -16,6 +16,8 @@ return [
         // Production frontend domains
         'https://mhrpci.site',
         'https://www.mhrpci.site',
+        'https://mhrpci.site/mhrhealthcare',
+        'https://www.mhrpci.site/mhrhealthcare',
         // Local dev frontends
         'http://127.0.0.1:8000',
         'http://localhost:8000',

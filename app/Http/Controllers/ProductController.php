@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Principal;
 use App\Models\Product;
 use App\ProductType;
+use App\Models\NewsletterSubscription;
+use App\Notifications\NewsletterProductCreated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -131,6 +135,8 @@ class ProductController extends Controller
             'is_featured' => (bool) ($validated['is_featured'] ?? false),
         ]);
 
+        $this->notifySubscribersAboutProduct($product);
+
         return redirect()
             ->route('products.index')
             ->with('success', 'Product created successfully.');
@@ -161,6 +167,23 @@ class ProductController extends Controller
             ])->toArray(),
             'principals' => Principal::orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    /**
+     * Notify newsletter subscribers when a new product is created.
+     */
+    protected function notifySubscribersAboutProduct(Product $product): void
+    {
+        try {
+            NewsletterSubscription::chunk(200, function ($subscribers) use ($product) {
+                Notification::send($subscribers, new NewsletterProductCreated($product->load('principal')));
+            });
+        } catch (\Throwable $e) {
+            Log::error('Newsletter product notify failed', [
+                'product_id' => $product->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

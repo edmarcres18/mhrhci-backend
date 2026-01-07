@@ -36,6 +36,7 @@ class UserInvitation extends Notification
         $expiresAt = $this->invitation->expires_at->format('F j, Y \a\t g:i A');
         $expiresIn = $this->invitation->expires_at->diffForHumans();
         $appName = config('app.name');
+        $logoUrl = 'https://mhrpci.site/images/mhrhci.png';
 
         // Get role display name
         $role = \App\UserRole::tryFrom($this->invitation->role);
@@ -52,6 +53,7 @@ class UserInvitation extends Notification
             'expiresIn' => $expiresIn,
             'appName' => $appName,
             'inviterName' => $inviterName,
+            'logoUrl' => $logoUrl,
         ];
 
         return (new MailMessage)

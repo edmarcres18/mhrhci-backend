@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Principal;
 use App\Models\Product;
+use App\Models\NewsletterSubscription;
+use App\Notifications\NewsletterPrincipalCreated;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -88,11 +92,30 @@ class PrincipalController extends Controller
             $data['logo'] = $request->file('logo')->store('principals', 'public');
         }
 
-        Principal::create($data);
+        $principal = Principal::create($data);
+
+        $this->notifySubscribersAboutPrincipal($principal);
 
         return redirect()
             ->route('principals.index')
             ->with('success', 'Principal created successfully.');
+    }
+
+    /**
+     * Notify newsletter subscribers when a new principal is created.
+     */
+    protected function notifySubscribersAboutPrincipal(Principal $principal): void
+    {
+        try {
+            NewsletterSubscription::chunk(200, function ($subscribers) use ($principal) {
+                Notification::send($subscribers, new NewsletterPrincipalCreated($principal));
+            });
+        } catch (\Throwable $e) {
+            Log::error('Newsletter principal notify failed', [
+                'principal_id' => $principal->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

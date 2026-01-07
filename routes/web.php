@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\NewsletterSubscriptionController;
 use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SiteInformationController;
@@ -23,6 +25,7 @@ Route::get('dashboard', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::resource('blogs', BlogController::class);
+    Route::resource('announcements', AnnouncementController::class);
     Route::resource('users', UserController::class);
     Route::resource('principals', PrincipalController::class);
 
@@ -50,6 +53,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('database-backup/{filename}', [DatabaseBackupController::class, 'destroy'])->name('database-backup.delete');
         Route::post('database-backup/restore', [DatabaseBackupController::class, 'restore'])->name('database-backup.restore');
         Route::post('database-backup/upload-restore', [DatabaseBackupController::class, 'uploadAndRestore'])->name('database-backup.upload-restore');
+
+        // Newsletter Subscriptions
+        Route::get('newsletter-subscriptions', function () {
+            return Inertia::render('NewsletterSubscriptions/Index');
+        })->name('newsletter-subscriptions.index');
     });
 
     // Site Settings - System Admin only

@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CustomerRegistrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HeroBackgroundController;
+use App\Http\Controllers\NewsletterSubscriptionController;
 use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SiteInformationController;
@@ -36,6 +38,15 @@ Route::middleware(['web', 'auth'])->prefix('dashboard')->group(function () {
 
 // Public API Routes with rate limiting (v1)
 Route::prefix('v1')->group(function () {
+    // Announcements API Endpoints
+    Route::get('/announcements', [AnnouncementController::class, 'apiIndex'])
+        ->name('api.announcements.index');
+    Route::get('/announcements/latest', [AnnouncementController::class, 'apiLatest'])
+        ->name('api.announcements.latest');
+    Route::get('/announcements/{id}', [AnnouncementController::class, 'showApi'])
+        ->where('id', '[0-9]+')
+        ->name('api.announcements.show');
+
     // Blog API Endpoints
     Route::get('/blogs', [BlogController::class, 'apiIndex'])
         ->name('api.blogs.index');
@@ -120,6 +131,15 @@ Route::prefix('v1')->group(function () {
     Route::get('/principals/{id}/products', [PrincipalController::class, 'apiProducts'])
         ->where('id', '[0-9]+')
         ->name('api.principals.products');
+
+    // Newsletter endpoints
+    Route::post('/newsletter/subscribe', [NewsletterSubscriptionController::class, 'subscribe'])
+        ->name('api.newsletter.subscribe');
+
+    Route::middleware(['web', 'auth', EnsureUserHasAdminPrivileges::class])->group(function () {
+        Route::get('/newsletter', [NewsletterSubscriptionController::class, 'apiIndex'])
+            ->name('api.newsletter.index');
+    });
 });
 
 // Site Settings API (Public) - For logo and name display

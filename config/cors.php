@@ -13,18 +13,12 @@ return [
     'paths' => ['api/*'],
     'allowed_methods' => ['*'],
     'allowed_origins' => [
-        // Production frontend domains
-        'https://mhrpci.site',
-        'https://www.mhrpci.site',
-        'https://mhrpci.site/mhrhealthcare',
-        'https://www.mhrpci.site/mhrhealthcare',
-        // Local dev frontends
         'http://127.0.0.1:8000',
         'http://localhost:8000',
-        'http://127.0.0.1:5173',
-        'http://localhost:5173',
         'http://192.168.1.210:4000',
         'http://192.168.1.210:4001',
+        'https://mhrpci.site/',
+        'https://www.mhrpci.site/',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],

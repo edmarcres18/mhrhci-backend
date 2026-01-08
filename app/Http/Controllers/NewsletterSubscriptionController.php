@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\View\View;
 
 class NewsletterSubscriptionController extends Controller
 {
@@ -116,5 +117,36 @@ class NewsletterSubscriptionController extends Controller
                 'message' => 'An error occurred while fetching subscriptions',
             ], 500);
         }
+    }
+
+    /**
+     * Public: Unsubscribe via emailed token.
+     */
+    public function unsubscribe(Request $request, NewsletterSubscription $subscription): View
+    {
+        $token = (string) $request->query('token');
+
+        if (! $token || $token !== $subscription->unsubscribe_token) {
+            return view('newsletter-unsubscribed', [
+                'success' => false,
+                'message' => 'This unsubscribe link is invalid or has already been used.',
+            ]);
+        }
+
+        if ($subscription->unsubscribed_at) {
+            return view('newsletter-unsubscribed', [
+                'success' => true,
+                'message' => 'You are already unsubscribed from our newsletter.',
+            ]);
+        }
+
+        $subscription->forceFill([
+            'unsubscribed_at' => now(),
+        ])->save();
+
+        return view('newsletter-unsubscribed', [
+            'success' => true,
+            'message' => 'You have been unsubscribed from our newsletter. You can subscribe again anytime.',
+        ]);
     }
 }

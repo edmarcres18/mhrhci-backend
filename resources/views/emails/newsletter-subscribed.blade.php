@@ -26,11 +26,6 @@
                 </tr>
             </table>
             <p style="margin:14px 0 12px 0; font-size:15px; color:#111827;">If you did not request this subscription, you can ignore this email.</p>
-            @isset($unsubscribeUrl)
-            <p style="margin:12px 0 0 0; font-size:14px; color:#6b7280;">
-                Prefer not to get these updates? <a href="{{ $unsubscribeUrl }}" style="color:#0b5ed7; font-weight:600;">Unsubscribe</a>.
-            </p>
-            @endisset
             <p style="margin:18px 0 0 0; font-size:15px; color:#111827;">— {{ $appName }} Team</p>
         </td>
     </tr>

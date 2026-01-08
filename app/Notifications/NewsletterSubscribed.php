@@ -30,10 +30,6 @@ class NewsletterSubscribed extends Notification
         $name = trim(($this->subscription->first_name ?? '').' '.($this->subscription->last_name ?? ''));
         $appName = config('app.name', 'MHR Health Care Inc');
         $logoUrl = 'https://mhrpci.site/images/mhrhci.png';
-        $unsubscribeUrl = route('newsletter.unsubscribe', [
-            'subscription' => $this->subscription->id,
-            'token' => $this->subscription->unsubscribe_token,
-        ]);
 
         return (new MailMessage)
             ->mailer(config('mail.default'))
@@ -43,7 +39,6 @@ class NewsletterSubscribed extends Notification
                 'name' => $name,
                 'appName' => $appName,
                 'logoUrl' => $logoUrl,
-                'unsubscribeUrl' => $unsubscribeUrl,
             ]);
     }
 }

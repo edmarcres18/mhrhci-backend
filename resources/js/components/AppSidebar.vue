@@ -22,6 +22,42 @@ const canAccessUsers = computed(() => (page.props.auth as any)?.canAccessUsers ?
 const isSystemAdmin = computed(() => (page.props.auth as any)?.isSystemAdmin ?? false);
 
 const mainNavGroups = computed<NavGroup[]>(() => {
+    const managementItems = [
+        {
+            title: 'Products',
+            href: '/products',
+            icon: Package,
+        },
+        {
+            title: 'Principals',
+            href: '/principals',
+            icon: Building2,
+        },
+        {
+            title: 'Blogs',
+            href: '/blogs',
+            icon: FileText,
+        },
+        {
+            title: 'Customer Registrations',
+            href: '/customer-registrations',
+            icon: ClipboardList,
+        },
+        {
+            title: 'Announcements',
+            href: '/announcements',
+            icon: Megaphone,
+        },
+    ];
+
+    if (canAccessUsers.value) {
+        managementItems.push({
+            title: 'Newsletter Subscriptions',
+            href: '/newsletter-subscriptions',
+            icon: Mail,
+        });
+    }
+
     const groups: NavGroup[] = [
         {
             items: [
@@ -34,40 +70,7 @@ const mainNavGroups = computed<NavGroup[]>(() => {
         },
         {
             label: 'Management',
-            items: [
-                {
-                    title: 'Products',
-                    href: '/products',
-                    icon: Package,
-                },
-                {
-                    title: 'Principals',
-                    href: '/principals',
-                    icon: Building2,
-                },
-                {
-                    title: 'Blogs',
-                    href: '/blogs',
-                    icon: FileText,
-                },
-                {
-                    title: 'Customer Registrations',
-                    href: '/customer-registrations',
-                    icon: ClipboardList,
-                },
-
-                {
-                    title: 'Announcements',
-                    href: '/announcements',
-                    icon: Megaphone,
-                },
-
-                {
-                    title: 'Newsletter Subscriptions',
-                    href: '/newsletter-subscriptions',
-                    icon: Mail,
-                },
-            ],
+            items: managementItems,
         },
     ];
 

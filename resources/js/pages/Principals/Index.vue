@@ -224,6 +224,7 @@ function formatDate(value?: string | null) {
                 </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex items-center justify-end gap-3">
+                    <Link :href="`/principals/${p.id}`" class="text-sm text-neutral-700 hover:underline dark:text-neutral-200">View</Link>
                     <Link :href="`/principals/${p.id}/edit`" class="text-sm text-neutral-700 hover:underline dark:text-neutral-200">Edit</Link>
                     <button @click="requestDelete(p.id, p.name)" class="text-sm text-red-600 hover:underline">Delete</button>
                   </div>

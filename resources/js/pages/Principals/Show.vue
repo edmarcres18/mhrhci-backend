@@ -70,7 +70,7 @@ const hasDescription = computed(() => !!props.principal.description);
                   v-if="props.principal.logo_url"
                   :src="props.principal.logo_url"
                   alt="Logo"
-                  class="h-full w-full object-cover"
+                  class="mx-auto max-h-full max-w-full object-contain"
                 />
                 <div v-else class="flex h-full w-full items-center justify-center text-xs font-medium text-neutral-500 dark:text-neutral-400">
                   No Logo

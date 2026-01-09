@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Principal {
   id: number;
@@ -23,6 +23,16 @@ const breadcrumbs = [
 ];
 
 const hasDescription = computed(() => !!props.principal.description);
+const logoUrl = computed(() => props.principal.logo_url ?? undefined);
+const isLogoModalOpen = ref(false);
+const openLogoModal = () => {
+  if (logoUrl.value) {
+    isLogoModalOpen.value = true;
+  }
+};
+const closeLogoModal = () => {
+  isLogoModalOpen.value = false;
+};
 </script>
 
 <template>
@@ -64,19 +74,32 @@ const hasDescription = computed(() => !!props.principal.description);
         <div class="rounded-2xl border border-neutral-200 bg-gradient-to-b from-neutral-50 to-white p-5 shadow-sm dark:border-neutral-800 dark:from-neutral-900 dark:to-neutral-950">
           <div class="mb-3 text-sm font-semibold text-neutral-600 dark:text-neutral-300">Brand</div>
           <div class="flex flex-col items-center justify-center gap-3">
-            <div class="relative w-36 rounded-xl border border-dashed border-neutral-300 bg-white p-3 shadow-inner dark:border-neutral-700 dark:bg-neutral-900">
+            <button
+              type="button"
+              class="group relative w-36 rounded-xl border border-dashed border-neutral-300 bg-white p-3 shadow-inner transition focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:border-neutral-700 dark:bg-neutral-900"
+              :disabled="!logoUrl"
+              @click="openLogoModal"
+            >
               <div class="aspect-square overflow-hidden rounded-lg bg-neutral-50 dark:bg-neutral-800">
                 <img
-                  v-if="props.principal.logo_url"
-                  :src="props.principal.logo_url"
+                  v-if="logoUrl"
+                  :src="logoUrl"
                   alt="Logo"
-                  class="mx-auto max-h-full max-w-full object-contain"
+                  class="mx-auto max-h-full max-w-full object-contain transition duration-200 group-hover:scale-[1.02]"
                 />
                 <div v-else class="flex h-full w-full items-center justify-center text-xs font-medium text-neutral-500 dark:text-neutral-400">
                   No Logo
                 </div>
               </div>
-            </div>
+              <div
+                v-if="logoUrl"
+                class="pointer-events-none absolute inset-0 flex items-end justify-center rounded-xl bg-gradient-to-t from-black/10 to-transparent opacity-0 transition group-hover:opacity-100"
+              >
+                <span class="mb-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-neutral-700 shadow-sm backdrop-blur dark:bg-neutral-800/90 dark:text-neutral-200">
+                  View full size
+                </span>
+              </div>
+            </button>
             <p class="text-xs text-neutral-500 dark:text-neutral-400">Uploads are displayed in a square card for consistency.</p>
           </div>
         </div>
@@ -109,6 +132,30 @@ const hasDescription = computed(() => !!props.principal.description);
               </dd>
             </div>
           </dl>
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="isLogoModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      @click.self="closeLogoModal"
+    >
+      <div class="relative max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white/95 p-4 shadow-2xl dark:bg-neutral-900/95">
+        <button
+          type="button"
+          class="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 shadow hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
+          @click="closeLogoModal"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <div class="flex items-center justify-center overflow-auto">
+          <img
+            v-if="logoUrl"
+            :src="logoUrl"
+            alt="Logo full size"
+            class="h-auto w-auto max-h-[80vh] max-w-full object-contain"
+          />
         </div>
       </div>
     </div>
